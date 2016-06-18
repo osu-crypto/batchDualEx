@@ -43,7 +43,14 @@ The unit tests can be run be executing
 
 `./Release/frontend.exe -u`
 
-When using Visual Studio, the is an additional project which integrates the tests into the Test Explorer. This window can be found under Tests->windows->Test Explorer. From here all the unit tests can be run.
+When using Visual Studio, the is an additional project which integrates the tests into the Test Explorer. This window can be found under Tests->windows->Test Explorer. From here all the unit tests can be run. Note that if you get the following message
+
+> Test Failed - [Test Name]<br>
+>Result Message:	A 64-bit test cannot run in a 32-bit process. Specify platform as X64 to force test run in X64 mode on X64 machine.
+
+then press Alt + s + s + a  -> x64    or Test -> Test Settings -> Default processor Architecture -> x64. Visual studio switches to x86 sometimes and must be set back to x64 since there is no x86 library. 
+
+Also, the *ReadBris tests may fail if they can't find the circuit file. You can ignore this or execute the tests from the appropriate folder.
 
 #### Primary Program
 
