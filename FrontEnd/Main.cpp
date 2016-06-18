@@ -444,7 +444,7 @@ void commandLineMain(int argc, const char** argv)
 
 	std::cout << "initTime " << std::chrono::duration_cast<std::chrono::milliseconds>(initFinish - initStart).count() << " ms" << std::endl;
 
-	if (numExec)
+	if (numExec & numConcurrentEvals)
 	{
 
 		std::cout << "exec Time " << onlineTotal / numExec / numConcurrentEvals << " us" << std::endl;
@@ -453,6 +453,11 @@ void commandLineMain(int argc, const char** argv)
 	}
 
 	std::cout << "total " << std::chrono::duration_cast<std::chrono::milliseconds>(finished - initStart).count() - sleepTime << " ms" << std::endl;
+
+	actor.close();
+
+	netMgr.stop();
+	ios.stop();
 	return;
 }
 
@@ -604,6 +609,13 @@ void Eval(
 	std::cout << "min time  " << std::chrono::duration_cast<std::chrono::microseconds>(min).count() << " us" << std::endl;
 
 	Lg::out << timer;
+
+	actor1.close();
+
+	netMgr0.stop();
+	netMgr1.stop();
+
+	ios.stop();
 }
 
 

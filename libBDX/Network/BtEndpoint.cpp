@@ -143,6 +143,21 @@ namespace libBDX {
 				}
 			}
 		}
+
+		auto stat = mDoneFuture.wait_for(std::chrono::seconds(5));
+		while(stat != std::future_status::ready)
+		{
+			Lg::out << " waiting for channels to close" << Lg::endl;
+			for (auto& chl : mChannels)
+			{
+				if (chl.mSocket->mStopped == false)
+				{
+					Lg::out << "  " << chl.getName() << Lg::endl;
+				}
+			}
+
+			stat = mDoneFuture.wait_for(std::chrono::seconds(5));
+		}
 		mDoneFuture.get();
 	}
 

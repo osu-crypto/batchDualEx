@@ -23,9 +23,9 @@ PRIMARYTESTS_LIB=$(BINARYDIR)/libBDXTests.a
 
 SRC=.
 
-FRONTEND_DIR=$(SRC)/frontend
+FRONTEND_DIR=$(SRC)/FrontEnd
 PRIMARY_DIR=$(SRC)/libBDX
-PRIMARYTESTS_DIR=$(SRC)/libBDX_Tests
+PRIMARYTESTS_DIR=$(SRC)/libBDXTests
 
 
 FRONTEND_SRC=$(wildcard $(FRONTEND_DIR)/*.cpp)
@@ -56,21 +56,24 @@ TPL=thirdparty/linux
 BOOST=thirdparty/linux/boost
 
 
-INC=-I./libBDX/\
-    -I./libBDX_Tests/\
-    -I$(TPL)\
-    -I$(BOOST)/includes/
+#INC=-I./libBDX/\
+#    -I./libBDXTests/\
+#    -I$(TPL)\
+#    -I$(BOOST)/includes/
 
-TPL_LIB=$(BOOST)/stage/lib/libboost_system.a\
-	$(BOOST)/stage/lib/libboost_thread.a\
-	$(TPL)/miracl/miracl/source/libmiracl.a\
-	$(TPL)/cryptopp/libcryptopp.a\
-	$(TPL)/mpir/.libs/libmpir.a 
-
-LIB=\
-	$(TPL_LIB)\
-	-lpthread\
-	-lrt
+#TPL_LIB=\
+#	$(BOOST)/stage/lib/libboost_filesystem.a\
+#	$(BOOST)/stage/lib/libboost_system.a\
+#	$(BOOST)/stage/lib/libboost_thread.a\
+#	$(TPL)/miracl/miracl/source/libmiracl.a\
+#	$(TPL)/cryptopp/libcryptopp.a\
+#	$(TPL)/mpir/.libs/libmpir.a \
+#	$(TPL)/ntl/src/libntl.a
+#
+#LIB=\
+#	$(TPL_LIB)\
+#	-lpthread\
+#	-lrt
 
 EXPORTHEADS=$(PRIMARY_H) $(PRIMARYTESTS_H)
 
@@ -120,8 +123,7 @@ $(BINARYDIR)/$(TARGETNAME): $(all_objs) $(EXTERNAL_LIBS) $(PRIMARY_LIB) $(PRIMAR
 	 -Wl,-Bdynamic  $(addprefix -l,$(SHARED_LIBRARY_NAMES))\
 	 -Wl,--as-needed  $(END_GROUP)
 
-
-
+	 
 $(BINARYDIR)/%.o : %.cpp $(all_make_files) |$(BINARYDIR)
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)

@@ -66,27 +66,11 @@ namespace libBDX
 		~DualExActor()
 		{
 
-			for(auto recvChl : mRecvMainChls)
-				recvChl->close();
+			close();
 
-			for (auto& sendThrd : mSendMainThreads)
-				sendThrd.join();
-
-			//for (auto sendChl : mSendMainChls)
-			//	sendChl->close();
-
-			for (auto& sendThrd : mSendSubThreads)
-				sendThrd.join();
-
-			for (auto sendChl : mSendSubChls)
-				sendChl->close();
-
-			for (auto& thrd : mEvalThreads)
-				thrd.join();
-
-			for (auto& recvSubThrd : mRecvSubChls)
-				recvSubThrd->close();
 		}
+
+		void close();
 
 		void init(PRNG& prng, u64 numParallelInit, u64 numParallelEval, u64 numThreadsPerEval, Timer& timer);
 

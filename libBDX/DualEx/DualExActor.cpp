@@ -178,6 +178,33 @@ namespace libBDX
 	}
 
 
+	void DualExActor::close()
+	{
+		for (auto recvChl : mRecvMainChls)
+			recvChl->close();
+		mRecvMainChls.clear();
+
+		for (auto& sendThrd : mSendMainThreads)
+			sendThrd.join();
+		mSendMainThreads.clear();
+
+		for (auto& sendThrd : mSendSubThreads)
+			sendThrd.join();
+		mSendSubThreads.clear();
+
+		for (auto sendChl : mSendSubChls)
+			sendChl->close();
+		mSendSubChls.clear();
+
+		for (auto& thrd : mEvalThreads)
+			thrd.join();
+		mEvalThreads.clear();
+
+		for (auto& recvSubThrd : mRecvSubChls)
+			recvSubThrd->close();
+		mRecvSubChls.clear();
+	}
+
 	/// This function starts the process of generating and receiving circuits and related things. It will spin off
 	/// numParallelInit * 4 threads. Two for generating and receiving OTs, Two for generating and receiving Circuits.
 	/// numParallelEval determines how many parallel evaluations can be performed at once. default it 1.
