@@ -29,8 +29,6 @@ Building on linux consists of aquiring the dependencies and calling make. The de
 `cd ./thirdparty/linux`<br>
 `bash all.get`
 
-**Note**: the all.get script tries to install bzip2, unzip, gcc-c++, m4 and will prompt for root access. If these are already installed just Ctrl-c through the prompt.
-
 Once built, return to the root directory and call 
 
 `make`
