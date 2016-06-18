@@ -70,3 +70,8 @@ Or call them in different terminals without the &. Many other parameters can be 
 * Statistical Security (-k, --statisticalK = 40)
 
 **NOTE**: By default there are no open circuits in the cut and choose, therefore its insecure. For secure parameters, refer to the provided paper.
+
+
+## Help
+
+Still having issues? Contact Me, Peter Rindal by email at rindalp@oregonstate.edu. If you have build issues, please let me know. I would like it to be easy to build and if its not I'd like to fix that.
