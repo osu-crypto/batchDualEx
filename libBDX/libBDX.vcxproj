@@ -1,0 +1,163 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4FABEF26-1F9C-4052-BEAC-A13B0FD63342}</ProjectGuid>
+    <RootNamespace>libBDXLib</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>libBDX</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalIncludeDirectories>C:\libs/boost;$(SolutionDir)\thirdparty\win\ntl\include;C:\libs\NTL\include;$(SolutionDir)/thirdparty\win\;C:\libs;$(SolutionDir)/libBDX;C:\libs\miracl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _WIN32_WINNT=0x0501</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\peter\Source\Repos\libBDX\thirdparty\mpir-2.7.0\lib\x64\Debug;C:\Users\peter\Source\Repos\libBDX\thirdparty\cryptopp\x64\Output\Debug;C:\boost_1_57_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\peter\Source\Repos\libBDX\thirdparty\mpir-2.7.0\build.vc14\x64\Debug\mpirxx.lib;C:\Users\peter\Source\Repos\libBDX\thirdparty\mpir-2.7.0\build.vc14\x64\Debug\mpir.lib;C:\Users\peter\Source\Repos\libBDX\thirdparty\cryptopp\x64\Output\Debug\cryptlib.lib;C:\Users\peter\Source\Repos\libBDX\x64\Debug\Miracl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\libs/boost;$(SolutionDir)\thirdparty\win\ntl\include;C:\libs\NTL\include;$(SolutionDir)/thirdparty\win\;C:\libs;$(SolutionDir)/libBDX;C:\libs\miracl;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _WIN32_WINNT=0x0501</PreprocessorDefinitions>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Circuit\DagCircuit.cpp" />
+    <ClCompile Include="Circuit\Circuit.cpp" />
+    <ClCompile Include="Circuit\ClassicGarbledCircuit.cpp" />
+    <ClCompile Include="Circuit\HalfGtGarbledCircuit.cpp" />
+    <ClCompile Include="Circuit\KProbeResistant.cpp" />
+    <ClCompile Include="Common\BitVector.cpp" />
+    <ClCompile Include="Common\Defines.cpp" />
+    <ClCompile Include="Common\Logger.cpp" />
+    <ClCompile Include="Common\ByteStream.cpp" />
+    <ClCompile Include="Common\Timer.cpp" />
+    <ClCompile Include="Crypto\AES.cpp" />
+    <ClCompile Include="Crypto\Commit.cpp" />
+    <ClCompile Include="Crypto\PRNG.cpp" />
+    <ClCompile Include="DualEx\Bucket.cpp" />
+    <ClCompile Include="DualEx\CircuitPackage.cpp" />
+    <ClCompile Include="DualEx\DualExActor.cpp" />
+    <ClCompile Include="Network\BtAcceptor.cpp" />
+    <ClCompile Include="Network\BtChannel.cpp" />
+    <ClCompile Include="Network\BtEndpoint.cpp" />
+    <ClCompile Include="Network\BtIOService.cpp" />
+    <ClCompile Include="Network\BtSocket.cpp" />
+    <ClCompile Include="Network\Channel.cpp" />
+    <ClCompile Include="OT\BaseOT.cpp" />
+    <ClCompile Include="OT\Math\bigint.cpp" />
+    <ClCompile Include="OT\Math\DMC.cpp" />
+    <ClCompile Include="OT\Math\modp.cpp" />
+    <ClCompile Include="OT\Math\Zp_Data.cpp" />
+    <ClCompile Include="OT\OTExtReceiver.cpp" />
+    <ClCompile Include="OT\OTExtSender.cpp" />
+    <ClCompile Include="OT\Tools.cpp" />
+    <ClCompile Include="PSI\AsyncPsiReceiver.cpp" />
+    <ClCompile Include="PSI\AsyncPsiSender.cpp" />
+    <ClCompile Include="PSI\PSIReceiver.cpp" />
+    <ClCompile Include="PSI\PSISender.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Circuit\DagCircuit.h" />
+    <ClInclude Include="Circuit\Circuit.h" />
+    <ClInclude Include="Circuit\ClassicGarbledCircuit.h" />
+    <ClInclude Include="Circuit\GarbledCircuit.h" />
+    <ClInclude Include="Circuit\Gate.h" />
+    <ClInclude Include="Circuit\HalfGtGarbledCircuit.h" />
+    <ClInclude Include="Circuit\KProbeResistant.h" />
+    <ClInclude Include="Circuit\Wire.h" />
+    <ClInclude Include="Common\ArrayView.h" />
+    <ClInclude Include="Common\BitVector.h" />
+    <ClInclude Include="Common\Defines.h" />
+    <ClInclude Include="Common\Exceptions.h" />
+    <ClInclude Include="Common\Logger.h" />
+    <ClInclude Include="Common\ByteStream.h" />
+    <ClInclude Include="Common\Timer.h" />
+    <ClInclude Include="Crypto\AES.h" />
+    <ClInclude Include="Crypto\Commit.h" />
+    <ClInclude Include="Crypto\PRNG.h" />
+    <ClInclude Include="Crypto\sha1.h" />
+    <ClInclude Include="DualEx\Bucket.h" />
+    <ClInclude Include="DualEx\CircuitPackage.h" />
+    <ClInclude Include="DualEx\DualExActor.h" />
+    <ClInclude Include="Network\BtAcceptor.h" />
+    <ClInclude Include="Network\BtChannel.h" />
+    <ClInclude Include="Network\BtEndpoint.h" />
+    <ClInclude Include="Network\BtIOService.h" />
+    <ClInclude Include="Network\BtSocket.h" />
+    <ClInclude Include="Network\Channel.h" />
+    <ClInclude Include="Network\Endpoint.h" />
+    <ClInclude Include="OT\BaseOT.h" />
+    <ClInclude Include="OT\Math\bigint.h" />
+    <ClInclude Include="OT\Math\DMC.h" />
+    <ClInclude Include="OT\Math\modp.h" />
+    <ClInclude Include="OT\Math\Zp_Data.h" />
+    <ClInclude Include="OT\OTExtInterface.h" />
+    <ClInclude Include="OT\OTExtReceiver.h" />
+    <ClInclude Include="OT\OTExtSender.h" />
+    <ClInclude Include="OT\Tools.h" />
+    <ClInclude Include="PSI\AsyncPsiReceiver.h" />
+    <ClInclude Include="PSI\AsyncPsiSender.h" />
+    <ClInclude Include="PSI\PSIReceiver.h" />
+    <ClInclude Include="PSI\PSISender.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
