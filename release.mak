@@ -13,10 +13,10 @@ OBJCOPY := objcopy
 
 #Additional flags
 PREPROCESSOR_MACROS := NDEBUG RELEASE
-INCLUDE_DIRS := ./WeGarble ./WeGarbleTests ./thirdparty/linux/boost/includes
+INCLUDE_DIRS := ./libBDX ./libBDXTests ./thirdparty/linux/boost/includes
 LIBRARY_DIRS := ./thirdparty/linux/boost/stage/lib ./thirdparty/linux/cryptopp ./thirdparty/linux/miracl/miracl/source ./thirdparty/linux/mpir/.libs ./thirdparty/linux/ntl/src ./bin/
 LIBRARY_NAMES :=  pthread rt
-LIBRARY_NAMES_STATIC =  boost_system boost_filesystem boost_thread mpir ntl miracl cryptopp WeGarble WeGarbleTests
+LIBRARY_NAMES_STATIC =  boost_system boost_filesystem boost_thread mpir ntl miracl cryptopp libBDX libBDXTests
 ADDITIONAL_LINKER_INPUTS := 
 MACOS_FRAMEWORKS := 
 LINUX_PACKAGES := 

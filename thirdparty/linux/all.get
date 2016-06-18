@@ -1,3 +1,5 @@
+
+echo Going to try and instal bzip2, unzip, gcc-c++, m4. if you have alll those, just ctrl-c through the passwork requests
 sudo yum install bzip2 -Y
 sudo yum install unzip -Y
 sudo yum install gcc-c++ -Y

@@ -7,7 +7,7 @@ cd ./boost
 
 ./bootstrap.sh
 
-./b2 stage --with-system --with-thread link=static -mt 
+./b2 stage --with-system --with-thread --with-filesystem link=static -mt 
 
 mkdir includes
 cp -r boost includes/
