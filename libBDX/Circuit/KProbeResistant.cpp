@@ -61,7 +61,7 @@ namespace libBDX
 		std::lock_guard<std::mutex> lock(loadOrBuildMtx);
 
 		std::stringstream ss;
-		ss << "./kProbe_" << inputSize << "_" << secParam << "_" << prng.get_block();
+		ss << "./kProbe_data_" << inputSize << "_" << secParam << "_" << prng.get_block();
 		std::string filename = ss.str();
 
 		//Lg::out << "kprobe " << prng.get_block() << Lg::endl;
