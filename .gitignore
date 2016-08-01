@@ -192,5 +192,7 @@ ModelManifest.xml
 /thirdparty
 kProbe_data_*
 
+*.VC.db
+
 CodeDB
 LinuxFrontEnd/VisualGDBCache
