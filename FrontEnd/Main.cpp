@@ -122,7 +122,7 @@ void commandLineMain(int argc, const char** argv)
 {
 	block b;
 	Timer timer;
-
+     
 	AES key(ZeroBlock);
 	key.ecbEncBlock(b, b);
 
