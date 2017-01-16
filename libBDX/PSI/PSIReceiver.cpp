@@ -1,16 +1,16 @@
 #include "PSI/PSIReceiver.h"
-#include "Crypto/Commit.h"
-#include "Common/Logger.h"
-#include "Crypto/AES.h"
+#include "cryptoTools/Crypto/Commit.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Crypto/AES.h"
 
-namespace libBDX
+namespace osuCrypto
 {
 
 #ifdef GetMessage
 #undef GetMessage
 #endif
 
-	block PRF(const block& b, u64 i)
+	block psiPRF(const block& b, u64 i)
 	{
 		//TODO("REMOVE THIS!!");
 		//return b;
@@ -22,7 +22,7 @@ namespace libBDX
 		block ret, tweak = _mm_set1_epi64x(i), enc;
 
 		ret = b ^ tweak;
-		AES128::EcbEncBlock(AES128::mAesFixedKey, ret, enc);
+        mAesFixedKey.ecbEncBlock(ret, enc);
 
 		ret = ret ^ enc; // H( a0 ) 
 
@@ -30,7 +30,7 @@ namespace libBDX
 	}
 
 
-	void PsiReceiver::init(u64 inputSize, u64 wordSize, Channel & chl, I_OTExtReceiver & otRecv, u64& otStartIdx)
+	void PsiReceiver::init(u64 inputSize, u64 wordSize, Channel & chl, BDX_OTExtReceiver & otRecv, u64& otStartIdx)
 	{
 		mWordSize = wordSize;
 		mOTIdx = otStartIdx;
@@ -60,7 +60,7 @@ namespace libBDX
 			block mask = ZeroBlock;
 			for (u64 b = 0; b < mWordSize; ++b, ++otIdx)
 			{
-				//Lg::out << "r m " << motRecv->GetMessage(otIdx) << " otIdx " << otIdx << " " << (u32)otRecv.mChoiceBits[otIdx] << "  " << (u32) mMyPermute[i][b]<< Lg::endl << Lg::endl;
+				//std::cout << "r m " << motRecv->GetMessage(otIdx) << " otIdx " << otIdx << " " << (u32)otRecv.mChoiceBits[otIdx] << "  " << (u32) mMyPermute[i][b]<< std::endl << std::endl;
 				mask = mask  ^ motRecv->GetMessage(otIdx);
 			}
 
@@ -68,12 +68,12 @@ namespace libBDX
 			{
 				//mMyPSIValues[i][j] = ZeroBlock;
 				//std::lock_guard<std::mutex> lock(Lg::mMtx);
-				//Lg::out << "r=" << i << " s=" << j << Lg::endl;
+				//std::cout << "r=" << i << " s=" << j << std::endl;
 
 
-				mMyPSIValues[i][j] = PRF(mask, j);
+				mMyPSIValues[i][j] = psiPRF(mask, j);
 
-				//Lg::out << "PRF(sum, "<< j << ") " << mMyPSIValues[i][j] << Lg::endl;
+				//std::cout << "psiPRF(sum, "<< j << ") " << mMyPSIValues[i][j] << std::endl;
 
 			}
 		}
@@ -99,12 +99,12 @@ namespace libBDX
 
 		//{
 		//	std::lock_guard<std::mutex> lock(Lg::mMtx); 
-		//Lg::out << "recv have [" << idx << "] " << mMyPermute[idx] << Lg::endl;
-		//Lg::out << "recv input[" << idx << "] " << input << Lg::endl;
+		//std::cout << "recv have [" << idx << "] " << mMyPermute[idx] << std::endl;
+		//std::cout << "recv input[" << idx << "] " << input << std::endl;
 
 		mMyPermute[idx] ^= input;
 
-		//Lg::out << "recv permu[" << idx << "] " << mMyPermute[idx] << Lg::endl;
+		//std::cout << "recv permu[" << idx << "] " << mMyPermute[idx] << std::endl;
 		//}
 		chl.asyncSend(mMyPermute[idx].data(), mMyPermute[idx].sizeBytes());
 		//	}
@@ -158,18 +158,18 @@ namespace libBDX
 		for (u64 j = 0; j < mCommits.size(); ++j)
 		{
 			//std::lock_guard<std::mutex> lock(Lg::mMtx);
-			//Lg::out << "P"<< (int)role << " cmp r=" << idx << " s=" << j << " my " << mMyPSIValues[idx][j] << " thr "  << theirPse[j] << Lg::endl;
+			//std::cout << "P"<< (int)role << " cmp r=" << idx << " s=" << j << " my " << mMyPSIValues[idx][j] << " thr "  << theirPse[j] << std::endl;
 
-			//if (neq(PRF(*theirPse, idx), mCommits[j][idx]))
+			//if (neq(psiPRF(*theirPse, idx), mCommits[j][idx]))
 			if (Commit(theirPse[j]) != mCommits[j][idx])
 			{
 				//std::lock_guard<std::mutex> lock(Lg::mMtx);
 
-				//Lg::out 
+				//std::cout 
 				//	<< "P" << (int)role << " cmp r=" << idx << " s=" << j << "  " << mMyPSIValues[idx][j] << "  " << theirPse[j] 
-				//	<< " ( " << Commit(theirPse[j]) << " " << mCommits[idx][j] << " )" << Lg::endl;
+				//	<< " ( " << Commit(theirPse[j]) << " " << mCommits[idx][j] << " )" << std::endl;
 
-				throw invalid_commitment();
+				throw std::runtime_error(LOCATION);
 			}
 
 			if (eq(mMyPSIValues[idx][j], theirPse[j]))
@@ -178,7 +178,7 @@ namespace libBDX
 
 				return true;
 				//output[j] = 1;
-				//Lg::out << "match " << idx  << "  (" << j << ")"<< Lg::endl;
+				//std::cout << "match " << idx  << "  (" << j << ")"<< std::endl;
 			}
 		}
 

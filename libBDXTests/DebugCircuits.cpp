@@ -1,6 +1,6 @@
 #include "DebugCircuits.h"
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 Circuit OneGateCircuit(GateType gt)
 {

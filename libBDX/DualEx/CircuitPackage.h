@@ -1,15 +1,15 @@
 #pragma once
 #include "Circuit/HalfGtGarbledCircuit.h"
-#include "Crypto/PRNG.h"
+#include "cryptoTools/Crypto/PRNG.h"
 #include "OT/OTExtReceiver.h"
 #include "OT/OTExtSender.h"
-#include "Network/Channel.h"
-//#include "Common/ArrayView.h"
-#include "Crypto/Commit.h"
+#include "cryptoTools/Network/Channel.h"
+//#include "cryptoTools/Common/ArrayView.h"
+#include "cryptoTools/Crypto/Commit.h"
 #include "Circuit/KProbeResistant.h"
-#include "Common/BitVector.h"
+#include "cryptoTools/Common/BitVector.h"
 
-namespace libBDX {
+namespace osuCrypto {
 
 	class CircuitPackage
 	{
@@ -39,7 +39,7 @@ namespace libBDX {
 			Role role,
 			Channel& channel,
 			const KProbeMatrix& mKProbe,
-			I_OTExtReceiver& recvOT,
+			BDX_OTExtReceiver& recvOT,
 			u64& OTIdx);
 
 
@@ -77,7 +77,7 @@ namespace libBDX {
 		void commitToOutputs(const Circuit& cir, Role role, Channel& channel);
 
 	public:
-		const I_OTExtReceiver* mRecvOT;
+		const BDX_OTExtReceiver* mRecvOT;
 		BitVector mOTRecvChoices;
 
 #ifdef ADAPTIVE_SECURE
@@ -104,7 +104,7 @@ namespace libBDX {
 		void initOT(
 			Channel& chl,
 			const KProbeMatrix& mKProbe,
-			I_OTExtSender& sendOT,
+			BDX_OTExtSender& sendOT,
 			u64& otIdx,
 			u64 thierInputSize);
 
@@ -130,7 +130,7 @@ namespace libBDX {
 		HalfGtGarbledCircuit mCircuit;
 		const block& OTSendMsg(u64 idx, u8 bit)const; 
 	private:
-		const I_OTExtSender* mOTSend;
+		const BDX_OTExtSender* mOTSend;
 		u64 mOTStartIdx, mOTCount;
 	public: 
 		Commit mOutputCommit;

@@ -6,13 +6,13 @@
 //#include "MyAssert.h"
 #include <fstream>
 #include "Common.h"
-#include "Common/Logger.h"
-#include "Common/BitVector.h"
-#include "Crypto/AES.h"
-#include "Crypto/PRNG.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Crypto/AES.h"
+#include "cryptoTools/Crypto/PRNG.h"
 #include "DebugCircuits.h"
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 
 #ifdef max
@@ -69,9 +69,9 @@ void Circuit_BrisRead_SHA_Test_Impl()
 
 	if (expectedOut != output)
 	{
-		//Lg::out << "in   " << input.hex() << Lg::endl;
-		//Lg::out << "out  " << output.hex() << Lg::endl;
-		//Lg::out << "outx " << expectedOut.hex() << Lg::endl;
+		//std::cout << "in   " << input.hex() << std::endl;
+		//std::cout << "out  " << output.hex() << std::endl;
+		//std::cout << "outx " << expectedOut.hex() << std::endl;
 		throw UnitTestFail();
 	}
 }
@@ -91,9 +91,8 @@ void Circuit_BrisRead_AES_Test_Impl()
 	block data = ZeroBlock;
 	block enc;
 
-	AES128::Key keyShed;
-	AES128::EncKeyGen(key, keyShed);
-	AES128::EcbEncBlock(keyShed, data, enc);
+	AES keyShed(key);
+    keyShed.ecbEncBlock( data, enc);
 
 	BitVector labels, output;
 	labels.reserve(cir.WireCount());
@@ -109,8 +108,8 @@ void Circuit_BrisRead_AES_Test_Impl()
 	if (expected != output)
 	{
 
-		//Lg::out << "out  " << output.hex() << Lg::endl;
-		//Lg::out << "outx " << expected.hex() << Lg::endl;		
+		//std::cout << "out  " << output.hex() << std::endl;
+		//std::cout << "outx " << expected.hex() << std::endl;		
 		throw UnitTestFail();
 	}
 }
@@ -119,7 +118,7 @@ void Circuit_BrisRead_AES_Test_Impl()
 
 void Circuit_Gen_Adder32_Test_Impl()
 {
-	Lg::setThreadName("CP_Test_Thread");
+	setThreadName("CP_Test_Thread");
 
 	Circuit cir = AdderCircuit(32);
 
@@ -128,11 +127,11 @@ void Circuit_Gen_Adder32_Test_Impl()
 	labels[2] = 1;
 	labels[32 + 2] = 1;
 
-	//Lg::out << "in " << labels << Lg::endl;
+	//std::cout << "in " << labels << std::endl;
 
 	cir.evaluate(labels);
 
-	//Lg::out << "ev " << labels << Lg::endl;
+	//std::cout << "ev " << labels << std::endl;
 
 	cir.translate(labels, output);
 
@@ -143,8 +142,8 @@ void Circuit_Gen_Adder32_Test_Impl()
 	{
 		if (expected[i] != output[i])
 		{
-			//Lg::out << "ex " << expected << Lg::endl;
-			//Lg::out << "ac " << output << Lg::endl;
+			//std::cout << "ex " << expected << std::endl;
+			//std::cout << "ac " << output << std::endl;
 			throw UnitTestFail();
 			
 		}
@@ -153,7 +152,7 @@ void Circuit_Gen_Adder32_Test_Impl()
 
 void Circuit_BrisRead_Adder32_Test_Impl()
 {
-	Lg::setThreadName("CP_Test_Thread");
+	setThreadName("CP_Test_Thread");
 
 	Circuit cir;
 	std::fstream in;
@@ -171,12 +170,12 @@ void Circuit_BrisRead_Adder32_Test_Impl()
 	((u32*)labels.data())[0] = (u32)-1;
 	((u32*)labels.data())[1] = (u32)1;
 
-	//Lg::out << "in " << labels << Lg::endl;
+	//std::cout << "in " << labels << std::endl;
 
 	cir.evaluate(labels);
 
 
-	//Lg::out << "ev " << labels << Lg::endl;
+	//std::cout << "ev " << labels << std::endl;
 
 
 	cir.translate(labels, output);
@@ -188,8 +187,8 @@ void Circuit_BrisRead_Adder32_Test_Impl()
 	{
 		if (expected[i] != output[i])
 		{
-			//Lg::out << "ex " << expected << Lg::endl;
-			//Lg::out << "ac " << output << Lg::endl;
+			//std::cout << "ex " << expected << std::endl;
+			//std::cout << "ac " << output << std::endl;
 			throw UnitTestFail("output doesnt match expected");
 
 		}
@@ -225,8 +224,8 @@ void DagCircuit_BrisRead_Adder32_Test_Impl()
 
 	for (u64 i = 0; i < 100; ++i)
 	{
-		u32 input0 = prng.get_uint();
-		u32 input1 = prng.get_uint();
+		u32 input0 = prng.get<i32>();
+		u32 input1 = prng.get<u32>();
 
 
 		labels.resize(64);
@@ -283,14 +282,14 @@ void DagCircuit_RandomReduce_Test_Impl()
 		auto& gate = dag.mGates[i];
 
 
-		u64 input0 = prng.get_u64() % dag.mNodes.size();
-		u64 input1 = prng.get_u64() % dag.mNodes.size();
+		u64 input0 = prng.get<u64>() % dag.mNodes.size();
+		u64 input1 = prng.get<u64>() % dag.mNodes.size();
 
 		if (input1 == input0)
 			input1 = (input1 + 1) % dag.mNodes.size();
 
 		gate.mParents.push_back(dag.mNodes[input0]);
-		u8 gt = prng.get_uchar() % ((gate.mParents[0]->isInvert()) ? 3 : 2);
+		u8 gt = prng.get<u8>() % ((gate.mParents[0]->isInvert()) ? 3 : 2);
 
 		if (gt == 0)
 		{

@@ -1,8 +1,8 @@
 #include "DagCircuit.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Common/Log.h"
 #include <stack>
 
-namespace libBDX {
+namespace osuCrypto {
 
 
 
@@ -121,7 +121,7 @@ namespace libBDX {
 					auto newParent = mParents[i]->mParents[0];
 					mType = invert(i, mType);
 
-					//Lg::out << "reduceInvert " << mWireIdx << "  on " << i << " par " << mParents[i]->wireIdx() << " new " << newParent->wireIdx() << Lg::endl;
+					//std::cout << "reduceInvert " << mWireIdx << "  on " << i << " par " << mParents[i]->wireIdx() << " new " << newParent->wireIdx() << std::endl;
 
 
 					if (newParent->isInvert())
@@ -294,14 +294,14 @@ namespace libBDX {
 			{
 				if (added[input->wireIdx()] == false)
 				{
-					//Lg::out << "-";
+					//std::cout << "-";
 					addStack.push(input);
 					depthFirstAdd(newWireIdx, added, addStack, cir, false);
 				}
 			}
 
 
-			//Lg::out << "#";
+			//std::cout << "#";
 			if (node->mParents.size() == 1)
 				newWireIdx[node->wireIdx()] = cir.AddGate(
 					newWireIdx[node->mParents[0]->wireIdx()],

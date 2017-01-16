@@ -1,24 +1,21 @@
 #include "CircuitPackage_Tests.h"
-#include "Network/BtEndpoint.h"
+#include "cryptoTools/Network/BtEndpoint.h"
 
 #include "Common.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include "DualEx/CircuitPackage.h"
-#include "Network/Channel.h"
-#include "OTOracleReceiver.h"
-#include "OTOracleSender.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Common/Log.h"
 
-#include "cryptopp/aes.h"
-#include "cryptopp/modes.h"
 #include <array>
 #include "DebugCircuits.h"
 
+using namespace osuCrypto;
 
 void CircuitPackage_BitAdder_Test_Impl()
 {
 
-	Lg::setThreadName("CP_Test_Thread");
+	setThreadName("CP_Test_Thread");
 
 	Circuit c = AdderCircuit(4);
 
@@ -29,17 +26,32 @@ void CircuitPackage_BitAdder_Test_Impl()
 	BtEndpoint ep1(ios, "localhost", 1212, false, name);
 	Channel& recvChl = ep1.addChannel(name, name);
 	Channel& sendChl = ep0.addChannel(name, name);
-	//NetworkManager sendNetMgr("localhost", 1212, 4, true);
-	//NetworkManager recvNetMgr("localhost", 1212, 4, false);
 
 	PRNG prng(_mm_set_epi32(4253465, 3434565, 87654, 23987045));
-	//Channel& sendChl = sendNetMgr.addChannel("cp");
-	//Channel& recvChl = recvNetMgr.addChannel("cp");
 
 	KProbeMatrix kprobe(c.Inputs()[Role::First], 40, prng);
 
-	OTOracleSender OTSend(prng, kprobe.encodingSize());
-	OTOracleReceiver OTRecv(OTSend, prng, kprobe.encodingSize());
+	//OTOracleSender OTSend(prng, kprobe.encodingSize());
+	//OTOracleReceiver OTRecv(OTSend, prng, kprobe.encodingSize());
+
+    std::atomic<u64> _1(0), _2(0);
+    BDX_OTExtReceiver OTRecv;
+    BDX_OTExtSender OTSend;
+    std::array<block, 128> baseRecvMsg;
+    BitVector baseRecvChoice(128); baseRecvChoice.randomize(prng);
+    std::array<std::array<block, 2>, 128>baseSendMsg;
+    prng.get(baseSendMsg.data(), baseSendMsg.size());
+    for (u64 i = 0; i < 128; ++i)
+    {
+        baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
+    }
+    u64 numOTs = kprobe.encodingSize();
+    auto thrd = std::thread([&]() {OTRecv.Extend(baseSendMsg, numOTs, prng, recvChl, _1); });
+    OTSend.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, sendChl, _2);
+    thrd.join();
+
+
+
 
 	std::vector<block> indexArray(kprobe.encodingSize());
 	for (u64 i = 0; i < indexArray.size(); ++i) indexArray[i] = _mm_set_epi64x(0, i);

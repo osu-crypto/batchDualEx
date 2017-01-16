@@ -1,13 +1,13 @@
 #include "Circuit.h"
 #include "Gate.h"
-#include "Common/Logger.h"
-#include "Common/Exceptions.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Common/Exceptions.h"
 #include <sstream>
 #include <unordered_map>
 #include <set>
 #include "Circuit/DagCircuit.h"
 
-namespace libBDX {
+namespace osuCrypto {
 
 
 
@@ -125,7 +125,7 @@ namespace libBDX {
 	{
 		labels.resize(mWireCount);
 
-		//Lg::out << "in " << labels << Lg::endl;
+		//std::cout << "in " << labels << std::endl;
 
 		for (auto& gate : mGates)
 		{
@@ -149,7 +149,7 @@ namespace libBDX {
 	{
 		labels.resize(mWireCount);
 
-		//Lg::out << "in " << labels << Lg::endl;
+		//std::cout << "in " << labels << std::endl;
 
 		for (auto& gate : mGates)
 		{

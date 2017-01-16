@@ -5,7 +5,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace libBDXTests
+namespace osuCryptoTests
 {
 
 

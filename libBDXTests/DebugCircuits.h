@@ -1,6 +1,6 @@
 #pragma once
 #include "Circuit/Circuit.h"
 
-libBDX::Circuit OneGateCircuit(libBDX::GateType gt);
-libBDX::Circuit AdderCircuit(libBDX::u64 bits);
+osuCrypto::Circuit OneGateCircuit(osuCrypto::GateType gt);
+osuCrypto::Circuit AdderCircuit(osuCrypto::u64 bits);
 

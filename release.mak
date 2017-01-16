@@ -14,7 +14,7 @@ OBJCOPY := objcopy
 #Additional flags
 PREPROCESSOR_MACROS := NDEBUG RELEASE
 
-INCLUDE_DIRS := ./libBDX ./libBDXTests ./thirdparty/linux/boost/includes ./thirdparty/linux/ ./thirdparty/linux/ntl/include/ ./thirdparty/linux/miracl/
+INCLUDE_DIRS := ./osuCrypto ./osuCryptoTests ./thirdparty/linux/boost/includes ./thirdparty/linux/ ./thirdparty/linux/ntl/include/ ./thirdparty/linux/miracl/
 
 LIBRARY_DIRS := ./thirdparty/linux/boost/stage/lib ./thirdparty/linux/cryptopp ./thirdparty/linux/miracl/miracl/source ./thirdparty/linux/mpir/.libs ./thirdparty/linux/ntl/src ./bin/
 

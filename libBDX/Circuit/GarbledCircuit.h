@@ -1,11 +1,11 @@
 #pragma once
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include "Circuit.h"
 #include <istream>
 #include <ostream>
 #include <functional>
 
-namespace libBDX{
+namespace osuCrypto{
    class GarbledCircuit
    {
    public:

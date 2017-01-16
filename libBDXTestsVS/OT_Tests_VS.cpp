@@ -5,7 +5,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace libBDXTests
+namespace osuCryptoTests
 {
 	TEST_CLASS(OT_Tests)
 	{
@@ -38,10 +38,5 @@ namespace libBDXTests
 			OTExt_100Receive_Test_Impl();
 		}
 
-		TEST_METHOD(Transpose_Test)
-		{
-			InitDebugPrinting("../test.out");
-			Transpose_Test_Impl();
-		}
 	};
 }

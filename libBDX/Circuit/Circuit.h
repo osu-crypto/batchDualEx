@@ -7,10 +7,10 @@
 #include <vector>
 #include "Wire.h"
 #include "Gate.h"
-#include "Common/Defines.h"
-#include "Common/BitVector.h"
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Common/BitVector.h"
 
-namespace libBDX {
+namespace osuCrypto {
 
 	class DagCircuit;
 

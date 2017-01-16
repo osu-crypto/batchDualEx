@@ -1,14 +1,14 @@
 #include "KProbe_Tests.h"
 
 #include "Common.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include "Circuit/KProbeResistant.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Common/Log.h"
 #include <fstream>
 
 #include <array>
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 void KProbe_Build_Test_Impl()
 {
@@ -54,8 +54,8 @@ void KProbe_XORTransitive_Test_Impl()
 	kprobe.decode(encoding1, decoding1);
 	kprobe.decode(deltaEcoding, deltaDecoding);
 
-	//Lg::out << encoding0 << "  " << encoding0 << Lg::endl;
-	//Lg::out << encoding1 << "  " << encoding1 << Lg::endl;
+	//std::cout << encoding0 << "  " << encoding0 << std::endl;
+	//std::cout << encoding1 << "  " << encoding1 << std::endl;
 
 	BitVector decodingXor(decoding0);
 	decodingXor ^= decoding1;
@@ -87,7 +87,7 @@ void KProbe_BlockBitVector_Test_Impl()
 
 	for (u64 i = 0; i < encoding0.size(); ++i)
 	{
-		blocks[i] = prng.get_block() ;
+		blocks[i] = prng.get<block>() ;
 		encoding0[i] = PermuteBit(blocks[i]);
 	}
 
@@ -106,7 +106,7 @@ void KProbe_BlockBitVector_Test_Impl()
 
 void KProbe_SaveLoad_Test_Impl()
 {
-	Lg::setThreadName("KProbe");
+	setThreadName("KProbe");
 	//InitDebugPrinting("..\\test.out");
 
 	PRNG prng(_mm_set_epi64x(222, 22));
@@ -144,7 +144,7 @@ void KProbe_SaveLoad_Test_Impl()
 #ifdef ENCODABLE_KPROBE
 void KProbe_BitVector_Test_Impl()
 {
-	Lg::setThreadName("KProbe");
+	setThreadName("KProbe");
 	//InitDebugPrinting("..\\test.out");
 
 	PRNG prng(_mm_set_epi64x(222, 22));
@@ -164,28 +164,28 @@ void KProbe_BitVector_Test_Impl()
 
 	if (input != decodedInput)
 	{
-		Lg::out << "Failed " << Lg::endl
-			<< input << Lg::endl
-			<< decodedInput << Lg::endl;
+		std::cout << "Failed " << std::endl
+			<< input << std::endl
+			<< decodedInput << std::endl;
 		throw UnitTestFail();
 	}
 	else
 	{
-		//Lg::out << "n=" << inputSize << Lg::endl
-		//	<< "k=" << secParam << Lg::endl;
+		//std::cout << "n=" << inputSize << std::endl
+		//	<< "k=" << secParam << std::endl;
 
-		//Lg::out << "m=" << encoding.size() << Lg::endl;
+		//std::cout << "m=" << encoding.size() << std::endl;
 
-		//Lg::out << "input/encoding" << Lg::endl
-		//	<< input << Lg::endl
-		//	<< encoding << Lg::endl;
+		//std::cout << "input/encoding" << std::endl
+		//	<< input << std::endl
+		//	<< encoding << std::endl;
 	}
 }
 
 
 void KProbe_ZeroLabels_Test_Impl()
 {
-	Lg::setThreadName("KProbe");
+	setThreadName("KProbe");
 	//InitDebugPrinting("..\\test.out");
 
 	PRNG prng(_mm_set_epi64x(222, 22));
@@ -194,7 +194,7 @@ void KProbe_ZeroLabels_Test_Impl()
 
 	// compute the zero and one wire label values
 	std::vector<block> zeroLabels(inputSize);
-	for (auto& b : zeroLabels) b = prng.get_block();
+	for (auto& b : zeroLabels) b = prng.get<block>();
 
 	// generate the k probe matrix
 	KProbeMatrix kProbe(inputSize, secParam, prng);
@@ -210,11 +210,11 @@ void KProbe_ZeroLabels_Test_Impl()
 	// compare
 	for (u64 i = 0; i < inputSize; ++i)
 	{
-		if (notEqual(zeroLabels[i], decodedInput[i]))
+		if (neq(zeroLabels[i], decodedInput[i]))
 		{
-			Lg::out << "Failed[" << i << "] " << Lg::endl
-				<< zeroLabels[i] << Lg::endl
-				<< decodedInput[i] << Lg::endl;
+			std::cout << "Failed[" << i << "] " << std::endl
+				<< zeroLabels[i] << std::endl
+				<< decodedInput[i] << std::endl;
 			throw UnitTestFail();
 		}
 	}
@@ -222,7 +222,7 @@ void KProbe_ZeroLabels_Test_Impl()
 
 void KProbe_Labels_Test_Impl()
 {
-	Lg::setThreadName("KProbe");
+	setThreadName("KProbe");
 	//InitDebugPrinting("..\\test.out");
 
 	PRNG prng(_mm_set_epi64x(222, 22));
@@ -234,9 +234,9 @@ void KProbe_Labels_Test_Impl()
 	inputBits.randomize(prng);
 
 	// compute the zero and one wire label values
-	block xorOffset = prng.get_block();
+	block xorOffset = prng.get<block>();
 	std::vector<block> zeroLabels(inputSize);
-	for (auto& b : zeroLabels) b = prng.get_block();
+	for (auto& b : zeroLabels) b = prng.get<block>();
 
 	// generate the k probe matrix
 	KProbeMatrix kProbe(inputSize, secParam, prng);
@@ -276,11 +276,11 @@ void KProbe_Labels_Test_Impl()
 	// compare
 	for (u64 i = 0; i < inputSize; ++i)
 	{
-		if (notEqual(expectedInputLabels[i], decodedInput[i]))
+		if (neq(expectedInputLabels[i], decodedInput[i]))
 		{
-			Lg::out << "Failed[" << i << "] " << Lg::endl
-				<< expectedInputLabels[i] << Lg::endl
-				<< decodedInput[i] << Lg::endl;
+			std::cout << "Failed[" << i << "] " << std::endl
+				<< expectedInputLabels[i] << std::endl
+				<< decodedInput[i] << std::endl;
 			throw UnitTestFail();
 		}
 	}

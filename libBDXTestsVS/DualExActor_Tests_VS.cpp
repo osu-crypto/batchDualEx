@@ -5,7 +5,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace libBDXTests
+namespace osuCryptoTests
 {
 	TEST_CLASS(DualExActor_Tests)
 	{
@@ -32,7 +32,7 @@ namespace libBDXTests
 		//		numOpened = 8,
 		//		psiSecParam = 40;
 
-		//	Lg::setThreadName("DEA_Test_Thread_1");
+		//	setThreadName("DEA_Test_Thread_1");
 		//	InitDebugPrinting("..\\test.out");
 
 		//	Circuit c = AdderCircuit(4);
@@ -46,13 +46,13 @@ namespace libBDXTests
 		//	OTOracleReceiver OTRecv1(OTSend1);
 
 		//	PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		//	PRNG prng1(prng0.get_block());
+		//	PRNG prng1(prng0.get<block>());
 
 		//	DualExActor actor0(c, Role::First, numExe, bucketSize, numOpened, psiSecParam, netMgr0, OTRecv0, OTSend1);
 		//	DualExActor actor1(c, Role::Second, numExe, bucketSize, numOpened, psiSecParam, netMgr1, OTRecv1, OTSend0);
 
 		//	auto thrd = std::thread([&]() {
-		//		Lg::setThreadName("DEA_Test_Thread_0");
+		//		setThreadName("DEA_Test_Thread_0");
 		//		actor0.init(prng0);
 		//	});
 

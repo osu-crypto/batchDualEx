@@ -32,9 +32,6 @@
     <ClCompile Include="PSI_Tests_VS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AES128_Tests_VS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Circuit_Tests_VS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

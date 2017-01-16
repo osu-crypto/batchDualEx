@@ -1,21 +1,22 @@
-#include "Common/Timer.h"
+#include "cryptoTools/Common/Timer.h"
 #include "DualExActor.h"
 #include <future>
-#include "Crypto/Commit.h"
+#include "cryptoTools/Crypto/Commit.h"
 #include <algorithm>
 #include "PSI/PSIReceiver.h"
 #include "PSI/PSISender.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Common/Log.h"
 #include <mutex>
 #include <fstream>
-#include "Network/Endpoint.h"
+#include "cryptoTools/Network/Endpoint.h"
 #include "DualEx/Bucket.h"
+#include "libOTe/Base/naor-pinkas.h"
 
 #define PARALLEL_PSI
 #define PRINT_SETUP_TIMES
 #define PRINT_EVAL_TIMES
 
-namespace libBDX
+namespace osuCrypto
 {
 
 	void GetRandSubset(u64 subsetSize, u64 setSize, PRNG& prng, std::vector<u64>& subset, std::vector<u64>& difference)
@@ -34,7 +35,7 @@ namespace libBDX
 			{
 				difference[j] = i;
 
-				u64 randIdx = prng.get_u64() % i;
+				u64 randIdx = prng.get<u64>() % i;
 				if (randIdx < subsetSize)
 					std::swap(subset[randIdx], difference[j]);
 			}
@@ -79,34 +80,36 @@ namespace libBDX
 		
 		PRNG prng(prngSeed);
 		auto& chl = mNetMgr.addChannel("OTRecv", "OTSend");
-		BaseOT baseOTs(chl, OTRole::Sender);
+        NaorPinkas baseOTs;// (chl, OTRole::Sender);
 
-		baseOTs.exec_base(prng);
+        std::array<std::array < block, 2>,gOtExtBaseOtCount> baseOTsSender_inputs;
+		baseOTs.send(baseOTsSender_inputs, prng, chl);
+
 		std::vector<std::thread> thrds(numInit - 1);
 		//std::vector<PRNG> prngs(numInit - 1);
 
-		std::vector<std::array< std::array<block, 2>, BASE_OT_COUNT>> bases(numInit);
-		std::array< std::array<PRNG, 2>, BASE_OT_COUNT> extenders;
+		std::vector<std::array< std::array<block, 2>, gOtExtBaseOtCount>> bases(numInit);
+		std::array< std::array<PRNG, 2>, gOtExtBaseOtCount> extenders;
 
-		for (u64 i = 0; i < BASE_OT_COUNT; ++i)
+		for (u64 i = 0; i < gOtExtBaseOtCount; ++i)
 		{
-			extenders[i][0].SetSeed(baseOTs.sender_inputs[i][0]);
-			extenders[i][1].SetSeed(baseOTs.sender_inputs[i][1]);
+			extenders[i][0].SetSeed(baseOTsSender_inputs[i][0]);
+			extenders[i][1].SetSeed(baseOTsSender_inputs[i][1]);
 		}
 
 		for (u64 t = 0; t < thrds.size(); ++t)
 		{
-			//prngs[t].SetSeed(prng.get_block());
+			//prngs[t].SetSeed(prng.get<block>());
 
 			auto& idx = mOTRecvDoneIdx[t];
 			assert(idx == 0);
 
-			for (u64 i = 0; i < BASE_OT_COUNT; ++i)
+			for (u64 i = 0; i < gOtExtBaseOtCount; ++i)
 			{
-				bases[t][i][0] = extenders[i][0].get_block();
-				bases[t][i][1] = extenders[i][1].get_block();
+				bases[t][i][0] = extenders[i][0].get<block>();
+				bases[t][i][1] = extenders[i][1].get<block>();
 			}
-			block seed = prng.get_block();
+			block seed = prng.get<block>();
 
 			thrds[t] = std::thread([&, t, seed]() {
 				PRNG prng2(seed);
@@ -116,10 +119,10 @@ namespace libBDX
 			});
 		}
 
-		for (u64 i = 0; i < BASE_OT_COUNT; ++i)
+		for (u64 i = 0; i < gOtExtBaseOtCount; ++i)
 		{
-			bases[numInit - 1][i][0] = extenders[i][0].get_block();
-			bases[numInit - 1][i][1] = extenders[i][1].get_block();
+			bases[numInit - 1][i][0] = extenders[i][0].get<block>();
+			bases[numInit - 1][i][1] = extenders[i][1].get<block>();
 		}
 		mOTRecv[numInit - 1].Extend(bases[numInit - 1], numOTExtPer, prng, chl, mOTRecvDoneIdx[numInit - 1]);
 
@@ -132,45 +135,49 @@ namespace libBDX
 	void DualExActor::getSendOTs(block prngSeed, u64 numInit, u64 numOTExtPer)
 	{
 		auto& chl = mNetMgr.addChannel("OTSend", "OTRecv");
-		BaseOT baseOTs(chl, OTRole::Receiver);
+        NaorPinkas baseOTs;// (chl, OTRole::Receiver);
 		PRNG prng(prngSeed);
 
-		baseOTs.exec_base(prng);
+        BitVector baseOTsReceiver_inputs(gOtExtBaseOtCount);
+        baseOTsReceiver_inputs.randomize(prng);
+        std::array < block, gOtExtBaseOtCount> baseOTsReceiver_outputs;
+		baseOTs.receive(baseOTsReceiver_inputs, baseOTsReceiver_outputs,prng, chl);
+
 		std::vector<std::thread> thrds(numInit - 1);
 		//std::vector<PRNG> prngs(numInit - 1);
 
-		std::vector<std::array< block, BASE_OT_COUNT>> bases(numInit);
-		std::array<PRNG, BASE_OT_COUNT> extenders;
+		std::vector<std::array< block, gOtExtBaseOtCount>> bases(numInit);
+		std::array<PRNG, gOtExtBaseOtCount> extenders;
 
-		for (u64 i = 0; i < BASE_OT_COUNT; ++i)
+		for (u64 i = 0; i < gOtExtBaseOtCount; ++i)
 		{
-			extenders[i].SetSeed(baseOTs.receiver_outputs[i]);
+			extenders[i].SetSeed(baseOTsReceiver_outputs[i]);
 		}
 
 		for (u64 t = 0; t < thrds.size(); ++t)
 		{
 			auto& idx = mOTSendDoneIdx[t];
 			assert(idx == 0);
-			//prngs[t].SetSeed(prng.get_block());
-			block seed = prng.get_block();
+			//prngs[t].SetSeed(prng.get<block>());
+			block seed = prng.get<block>();
 
-			for (u64 i = 0; i < BASE_OT_COUNT; ++i)
+			for (u64 i = 0; i < gOtExtBaseOtCount; ++i)
 			{
-				bases[t][i] = extenders[i].get_block();
+				bases[t][i] = extenders[i].get<block>();
 			}
 			thrds[t] = std::thread([&, t, seed]() {
 				PRNG prng2(seed);
 				Channel& chl = mNetMgr.addChannel("OTSend" + ToString(t), "OTRecv" + ToString(t));
-				mOTSend[t].Extend(bases[t], baseOTs.receiver_inputs, numOTExtPer, prng2, chl, mOTSendDoneIdx[t]);
+				mOTSend[t].Extend(bases[t], baseOTsReceiver_inputs, numOTExtPer, prng2, chl, mOTSendDoneIdx[t]);
 				chl.close();
 			});
 		}
 
-		for (u64 i = 0; i < BASE_OT_COUNT; ++i)
+		for (u64 i = 0; i < gOtExtBaseOtCount; ++i)
 		{
-			bases[numInit - 1][i] = extenders[i].get_block();
+			bases[numInit - 1][i] = extenders[i].get<block>();
 		}
-		mOTSend[numInit - 1].Extend(bases[numInit - 1], baseOTs.receiver_inputs, numOTExtPer, prng, chl, mOTSendDoneIdx[numInit - 1]);
+		mOTSend[numInit - 1].Extend(bases[numInit - 1], baseOTsReceiver_inputs, numOTExtPer, prng, chl, mOTSendDoneIdx[numInit - 1]);
 		chl.close();
 
 		for (auto& thrd : thrds)
@@ -214,7 +221,7 @@ namespace libBDX
 		Channel& chl = mNetMgr.addChannel("init");
 
 		// send cut n choose commitments 
-		block myCnCSeed = prng.get_block();
+		block myCnCSeed = prng.get<block>();
 		auto CnCom = Commit(myCnCSeed);
 		chl.asyncSend(&CnCom, sizeof(Commit));
 
@@ -276,8 +283,8 @@ namespace libBDX
 		for (u64 i = 0; i < mNumInitThreads; ++i) { mOTSendDoneIdx[i] = mOTRecvDoneIdx[i] = 0; }
 
 		// spin off two threads that will start generating the OTs, these will fork into numInitThreads threads
-		block sendOTSeed(prng.get_block());
-		block recvOTSeed(prng.get_block());
+		block sendOTSeed(prng.get<block>());
+		block recvOTSeed(prng.get<block>());
 
 		// Spin off the OT threads. There two threads will generate mNumInitThreads-1 other threads, all doing OTs
 		mOTSendThrd = std::thread([&, sendOTSeed]() { getSendOTs(sendOTSeed, mNumInitThreads, numSendOTsPer); });
@@ -309,22 +316,22 @@ namespace libBDX
 		ByteStream paramBuffRecv;
 		chl.recv(paramBuffRecv);
 		u64 * params = (u64*)paramBuffRecv.data();
-		if (*params++ != numParallelInit) { Lg::out << "parameter mismatch: numParallelInit us " << numParallelInit << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: numParallelInit"); }
-		if (*params++ != numParallelEval) { Lg::out << "parameter mismatch: numParallelEval us " << numParallelEval << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: numParallelEval"); }
-		if (*params++ != numThreadsPerEval) { Lg::out << "parameter mismatch: numThreadsPerEval us " << numThreadsPerEval << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: numThreadsPerEval"); }
-		if (*params++ != mNumExe) { Lg::out << "parameter mismatch: mNumExe us " << mNumExe << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: mNumExe"); }
-		if (*params++ != mBucketSize) { Lg::out << "parameter mismatch: mBucketSize us " << mBucketSize << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: mBucketSize"); }
-		if (*params++ != mNumCircuits) { Lg::out << "parameter mismatch: mNumCircuits us " << mNumCircuits << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: mNumCircuits"); }
-		if (*params++ != mPsiSecParam) { Lg::out << "parameter mismatch: mPsiSecParam us " << mPsiSecParam << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: mPsiSecParam"); }
-		if (*params++ != mTheirKProbe.mSignature) { Lg::out << "parameter mismatch: theirKProbe us " << mTheirKProbe.mSignature << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: theirKProbe"); }
-		if (*params++ != mMyKProbe.mSignature) { Lg::out << "parameter mismatch: myKProbe us " << mMyKProbe.mSignature << "  them " << *--params << Lg::endl;  throw std::runtime_error("parameter mismatch: myKProbe"); }
+		if (*params++ != numParallelInit) { std::cout << "parameter mismatch: numParallelInit us " << numParallelInit << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: numParallelInit"); }
+		if (*params++ != numParallelEval) { std::cout << "parameter mismatch: numParallelEval us " << numParallelEval << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: numParallelEval"); }
+		if (*params++ != numThreadsPerEval) { std::cout << "parameter mismatch: numThreadsPerEval us " << numThreadsPerEval << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: numThreadsPerEval"); }
+		if (*params++ != mNumExe) { std::cout << "parameter mismatch: mNumExe us " << mNumExe << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: mNumExe"); }
+		if (*params++ != mBucketSize) { std::cout << "parameter mismatch: mBucketSize us " << mBucketSize << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: mBucketSize"); }
+		if (*params++ != mNumCircuits) { std::cout << "parameter mismatch: mNumCircuits us " << mNumCircuits << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: mNumCircuits"); }
+		if (*params++ != mPsiSecParam) { std::cout << "parameter mismatch: mPsiSecParam us " << mPsiSecParam << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: mPsiSecParam"); }
+		if (*params++ != mTheirKProbe.mSignature) { std::cout << "parameter mismatch: theirKProbe us " << mTheirKProbe.mSignature << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: theirKProbe"); }
+		if (*params++ != mMyKProbe.mSignature) { std::cout << "parameter mismatch: myKProbe us " << mMyKProbe.mSignature << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: myKProbe"); }
 
 
 		// now spin off the send threads what will start sending and receiving circuits
 		for (u64 i = 0; i < mNumInitThreads; ++i)
 		{
-			block sendSeed(prng.get_block());
-			block recvSeed(prng.get_block());
+			block sendSeed(prng.get<block>());
+			block recvSeed(prng.get<block>());
 
 			sendThrds[i] = std::thread([&, i, sendSeed]() {initSend(i, sendSeed, mCirRecvFutr[i], mTheirSetsFutr); });
 			recvThrds[i] = std::thread([&, i, recvSeed]() {initRecv(i, recvSeed, mCirRecvProm[i], mMyCnCSets); });
@@ -350,7 +357,7 @@ namespace libBDX
 
 		// check the decommit
 		if (Commit(cncSeed) != theirCnCCommit)
-			throw invalid_commitment();
+			throw std::runtime_error(LOCATION);
 
 		// compute the open and eval sets
 		PRNG theirSetsPrng(cncSeed);
@@ -398,9 +405,9 @@ namespace libBDX
 
 		// set up all the online channels at once (faster unless i implement async connect...)
 		//TODO("fix addChannels, There are bugs when too many channels are connected at once. like more than 6.");
-		//Lg::out << "adding " << (numParallelEval * (1)) << " online channels" << Lg::endl;
+		//std::cout << "adding " << (numParallelEval * (1)) << " online channels" << std::endl;
 
-		//Lg::out << "added  " << (numParallelEval * (1)) << " online channels" << Lg::endl;
+		//std::cout << "added  " << (numParallelEval * (1)) << " online channels" << std::endl;
 
 		mRecvMainChls.resize(numParallelEval);
 		//mSendMainChls.resize(numParallelEval);
@@ -429,12 +436,12 @@ namespace libBDX
 
 
 				// spin off the thread that will evaluate every i + numThreadsPerEval * j circuit in a bucket for j=0,1,2,...
-				block evalSeed = prng.get_block();
+				block evalSeed = prng.get<block>();
 				*evalThrdIter++ = std::thread([this, j, i, numParallelEval, numThreadsPerEval, evalSeed]()
 				{
 					// set this threads name. used for debugging in visual studio.
-					Lg::setThreadName("EvalThread_"+ToString(mRole)+"_" + ToString(j) + "_" + ToString(i));
-
+					setThreadName("EvalThread_"+ToString(mRole)+"_" + ToString(j) + "_" + ToString(i));
+                    
 					// create a PRNG used by this thread
 					PRNG prng(evalSeed);
 
@@ -451,7 +458,7 @@ namespace libBDX
 				*sendSubThrdIter++ = std::thread([this, j, i, numParallelEval, numThreadsPerEval]()
 				{
 					// set this threads name. used for debugging in visual studio.
-					Lg::setThreadName("SendSubThread_" + ToString(mRole) + "_" + ToString(j) + "_" + ToString(i));
+					setThreadName("SendSubThread_" + ToString(mRole) + "_" + ToString(j) + "_" + ToString(i));
 
 					// connect to the other party's Eval/PSI thread.
 					Channel& chl = mNetMgr.addChannel("onlineSend" + ToString(j) + "_" + ToString(i), "onlineEval" + ToString(j) + "_" + ToString(i));
@@ -466,11 +473,11 @@ namespace libBDX
 
 			// This thread is used as the place the input correction string is send by the receiving party. 
 			// Really it doesn't do too much.
-			block seed = prng.get_block();
+			block seed = prng.get<block>();
 			mSendMainThreads[j] = std::thread([this, j, numParallelEval, seed]() {
 
 				// set this threads name. used for debugging in visual studio.
-				Lg::setThreadName("SendInputLoop_" + ToString(mRole) + "_" + ToString(j));
+				setThreadName("SendInputLoop_" + ToString(mRole) + "_" + ToString(j));
 
 				// create a PRNG used by this thread
 				PRNG prng(seed);
@@ -562,7 +569,7 @@ namespace libBDX
 
 		block theirOTMsgXORSum = ZeroBlock;
 
-		//Lg::out << "receive  " + ToString(initThrdIdx) + "  otIdx "  + ToString(otIdx) << Lg::endl;
+		//std::cout << "receive  " + ToString(initThrdIdx) + "  otIdx "  + ToString(otIdx) << std::endl;
 
 
 		// check the open circuits
@@ -571,7 +578,7 @@ namespace libBDX
 			if (cirIdx >= startIdx && cirIdx < endIdx)
 			{
 #ifdef ADAPTIVE_SECURE
-				//Lg::out << "receive " + ToString(initThrdIdx) + " Opening " + ToString(cirIdx) << Lg::endl;
+				//std::cout << "receive " + ToString(initThrdIdx) + " Opening " + ToString(cirIdx) << std::endl;
 
 				mTheirCircuits[cirIdx].open(mCircuit, mTheirKProbe, mMyKProbe, mRole, chl, theirOTMsgXORSum,  mIndexArray, blockBuff);
 #else
@@ -581,7 +588,7 @@ namespace libBDX
 			}
 		}
 
-		//Lg::out << "receive " + ToString(initThrdIdx) + "  Open Done" << Lg::endl;
+		//std::cout << "receive " + ToString(initThrdIdx) + "  Open Done" << std::endl;
 
 		chl.recv(&dummyMessage, sizeof(u64));
 		if (dummyMessage != 0)
@@ -591,10 +598,10 @@ namespace libBDX
 		chl.recv(&theirOTMsgProof, sizeof(block));
 		
 
-		if (notEqual(theirOTMsgProof, theirOTMsgXORSum))
+		if (neq(theirOTMsgProof, theirOTMsgXORSum))
 		{
-			Lg::out << "receive " + ToString(initThrdIdx) + "  proof my " << theirOTMsgXORSum << " thr " << theirOTMsgProof << Lg::endl;
-			throw invalid_commitment();
+			std::cout << "receive " + ToString(initThrdIdx) + "  proof my " << theirOTMsgXORSum << " thr " << theirOTMsgProof << std::endl;
+			throw std::runtime_error(LOCATION);
 		}
 
 
@@ -634,7 +641,7 @@ namespace libBDX
 		if (dummyMessage != 0)
 			throw std::runtime_error("");
 
-		//Lg::out << "receive " + ToString(initThrdIdx) + " bucketing Done" << Lg::endl;
+		//std::cout << "receive " + ToString(initThrdIdx) + " bucketing Done" << std::endl;
 
 		// no that the bucketing is done, lets get our K-probe inputs. These are random inputs 
 		// done in the offline phase to speed up the online phase. This is done at the end because 
@@ -644,7 +651,7 @@ namespace libBDX
 			mBuckets[bcktIdx].initKProbeInputRecv(mCircuit, chl, mMyKProbe, prng, mRole);
 		}
 
-		//Lg::out << "receive " + ToString(initThrdIdx) + " kprobe Done" << Lg::endl;
+		//std::cout << "receive " + ToString(initThrdIdx) + " kprobe Done" << std::endl;
 
 		// all done :)
 		chl.close();
@@ -662,7 +669,7 @@ namespace libBDX
 		file.open(filename, std::ios::out);
 
 		if (file.is_open() == false)
-			Lg::out << "couldnt open file " << filename << Lg::endl;
+			std::cout << "couldnt open file " << filename << std::endl;
 
 		file << timer;
 #endif
@@ -721,20 +728,20 @@ namespace libBDX
 		//TODO("come up with something better inside the network manager");
 		chl.send(&dummyMessage, sizeof(dummyMessage));
 
-		//Lg::out << "Sender " + ToString(initThrdIdx) + " otIdx " + ToString(otIdx) << Lg::endl;
+		//std::cout << "Sender " + ToString(initThrdIdx) + " otIdx " + ToString(otIdx) << std::endl;
 
 		auto& cutnChoose = *cutnChooseSets.get();
 		block myOTMsgProof = ZeroBlock;
 
 
-		//Lg::out << "Sender " + ToString(initThrdIdx) + " opening" << Lg::endl;
+		//std::cout << "Sender " + ToString(initThrdIdx) + " opening" << std::endl;
 
 		// send over all the open circuits
 		for (u64 cirIdx : cutnChoose[0])
 		{
 			if (cirIdx >= startIdx && cirIdx < endIdx)
 			{
-				//Lg::out << "Sender " + ToString(initThrdIdx) + "  opening " + ToString(cirIdx) << Lg::endl;
+				//std::cout << "Sender " + ToString(initThrdIdx) + "  opening " + ToString(cirIdx) << std::endl;
 
 				mMyCircuits[cirIdx].open(mCircuit, chl, mRole, myOTMsgProof);
 				mMyCircuits[cirIdx].clear();
@@ -746,7 +753,7 @@ namespace libBDX
 		//TODO("come up with something better inside the network manager");
 		chl.send(&dummyMessage, sizeof(dummyMessage));
 
-		//Lg::out << "Sender " + ToString(initThrdIdx) + "  opened w/ prf "<< myOTMsgProof << Lg::endl;
+		//std::cout << "Sender " + ToString(initThrdIdx) + "  opened w/ prf "<< myOTMsgProof << std::endl;
 
 		chl.asyncSendCopy(&myOTMsgProof, sizeof(block));
 
@@ -769,7 +776,7 @@ namespace libBDX
 			if (bcktIdx + mNumInitThreads < mBuckets.size())
 				evalIter += numSkip;
 		}
-		//Lg::out << "Sender " + ToString(initThrdIdx) + " kprobe" << Lg::endl;
+		//std::cout << "Sender " + ToString(initThrdIdx) + " kprobe" << std::endl;
 
 		// this message blocks until everything before has been sent. 
 		//Temp fixed for sending too much stuff and overflowing the OS TCP buffer
@@ -792,7 +799,7 @@ namespace libBDX
 		u64 bufferOffset = evalIdx % mLabels.size();
 		//std::lock_guard<std::mutex>lock(mMtxs[bufferOffset]);
 
-		//Lg::out << "recv start " << evalIdx << "  " << bufferOffset << " " << (int)mRole << Lg::endl;
+		//std::cout << "recv start " << evalIdx << "  " << bufferOffset << " " << (int)mRole << std::endl;
 
 
 		if (input.size() != mCircuit.Inputs()[(int)mRole]) throw std::invalid_argument("input size");
@@ -822,9 +829,8 @@ namespace libBDX
 		block theirOutLabelSeed;
 		chl.recv(&theirOutLabelSeed, sizeof(block));
 
-		AES128::Key outGen;
-		AES128::EncKeyGen(theirOutLabelSeed, outGen);
-		AES128::EcbEncBlocks(outGen, mIndexArray.data(), mOutLabels[bufferOffset].data(), mOutLabels[bufferOffset].size());
+        AES outGen(theirOutLabelSeed);
+        outGen.ecbEncBlocks(mIndexArray.data(), mOutLabels[bufferOffset].size(), mOutLabels[bufferOffset].data());
 
 		bucket.mTheirOutputLabelsProm.set_value(&mOutLabels[bufferOffset]);
 
@@ -982,7 +988,7 @@ namespace libBDX
 			u64 circuitIdx = circuitOffset;
 			//for (u64 circuitIdx = circuitOffset, i=0; circuitIdx < mBucketSize; circuitIdx += circuitStep, ++i)
 			//{
-				//Lg::out << i << Lg::endl; 
+				//std::cout << i << std::endl; 
 			block psiInput = bucket.evalCircuit(
 				circuitIdx,
 				mCircuit,
@@ -1008,7 +1014,7 @@ namespace libBDX
 				for (u64 i = 0; i < psiIdx; ++i)
 					if (eq(psiInput, bucket.mPSIInputBlocks[bucket.mPSIInputPermutes[i]]))
 					{
-						psiInput = prng.get_block();
+						psiInput = prng.get<block>();
 					}
 
 				// store our psi value.
@@ -1018,7 +1024,7 @@ namespace libBDX
 			psiInput = bucket.mPsiInputFuture[circuitIdx].get();
 
 
-			//Lg::out << psiInput << Lg::endl;
+			//std::cout << psiInput << std::endl;
 
 #ifdef PARALLEL_PSI
 
@@ -1061,7 +1067,7 @@ namespace libBDX
 				if (missCount == bucket.mTheirCircuits.size())
 				{
 					try {
-						Lg::out << "No items found in the intersection " << Lg::endl;
+						std::cout << "No items found in the intersection " << std::endl;
 						throw std::runtime_error("No items found in the intersection " LOCATION);
 					}
 					catch (...)
@@ -1088,7 +1094,7 @@ namespace libBDX
 		file.open(filename, std::ios::out);
 
 		if (file.is_open() == false)
-			Lg::out << "couldnt open file " << filename << Lg::endl;
+			std::cout << "couldnt open file " << filename << std::endl;
 
 		file << timer;
 #endif
@@ -1099,7 +1105,7 @@ namespace libBDX
 		//		u64 numParallelEvals = mRecvMainChls.size();
 		//		u64 threadsPer = mEvalThreads.size() / numParallelEvals;
 		//
-		//		Lg::out << "open file range " << (filename + "_" + ToString(numParallelEvals) + "_" + ToString(threadsPer)) << Lg::endl;
+		//		std::cout << "open file range " << (filename + "_" + ToString(numParallelEvals) + "_" + ToString(threadsPer)) << std::endl;
 		//
 		//
 		//		for (u64 i = 0; i <numParallelEvals; ++i)
@@ -1112,7 +1118,7 @@ namespace libBDX
 		//				file.open(filename + "_" + ToString(i) + "_" + ToString(j), std::ios::out);
 		//
 		//				if (file.is_open() == false)
-		//					Lg::out << "couldnt open file " << (filename + "_" + ToString(i) + "_" + ToString(j)) << Lg::endl;
+		//					std::cout << "couldnt open file " << (filename + "_" + ToString(i) + "_" + ToString(j)) << std::endl;
 		//
 		//				file << mTimes[i*numParallelEvals + j];
 		//			}

@@ -1,10 +1,10 @@
 #pragma once
 #include "Wire.h"
 #include <vector>
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include <array>
 
-namespace libBDX {
+namespace osuCrypto {
 	enum class GateType
 	{
 		Zero = 0, //0000,

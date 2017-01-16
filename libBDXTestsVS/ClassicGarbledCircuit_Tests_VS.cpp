@@ -6,13 +6,13 @@
 //#include "MyAssert.h"
 //#include <fstream>
 //#include "Common.h"
-//#include "Common/Logger.h"
+//#include "cryptoTools/Common/Log.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace libBDXTests
+namespace osuCryptoTests
 {
-   //using namespace libBDX;
+   //using namespace osuCrypto;
    TEST_CLASS(ClassicGarbledCircuit_Tests)
    {
    public:
@@ -87,8 +87,8 @@ namespace libBDXTests
    //      {
    //         for (u64 input1 = 0; input1 < ((u64)1 <<bits); ++input1)
    //         {
-   //            libBDX::Lg::out << " =================================================" << libBDX::Lg::endl;
-			//   libBDX::Lg::out << input0 << "  " << input1 << libBDX::Lg::endl << libBDX::Lg::endl;
+   //            osuCrypto::std::cout << " =================================================" << osuCrypto::std::endl;
+			//   osuCrypto::std::cout << input0 << "  " << input1 << osuCrypto::std::endl << osuCrypto::std::endl;
 
    //            BitVector inputVec;
 

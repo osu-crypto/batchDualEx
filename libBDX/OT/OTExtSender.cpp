@@ -1,28 +1,31 @@
 #include "OTExtSender.h"
 
-#include "OT/BaseOT.h"
-#include "OT/Tools.h"
-#include "Common/Logger.h"
+//#include "OT/BaseOT.h"
+//#include "OT/Tools.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Common/ByteStream.h"
+#include "cryptoTools/Crypto/Commit.h"
+#include "libOTe/Tools/Tools.h"
 
 #ifdef GetMessage
 #undef GetMessage
 #endif
 
-namespace libBDX
+namespace osuCrypto
 {
 	//#define OTEXT_DEBUG
 
 	using namespace std;
 
 
-	const block& OTExtSender::GetMessage(u64 idx, const u8 choice) const
+	const block& BDX_OTExtSender::GetMessage(u64 idx, const u8 choice) const
 	{
 		return  mMessages[choice][idx];
 	}
 
 //
-//	void OTExtSender::Extend(
-//		std::array<block, BASE_OT_COUNT>& baseMessages,
+//	void BDX_OTExtSender::Extend(
+//		std::array<block, 128>& baseMessages,
 //		BitVector& baseChoiceBits,
 //		u64 numOTExt,
 //		PRNG& prng,
@@ -42,7 +45,7 @@ namespace libBDX
 //		//BitVector buf0(numOTExt);
 //
 //		// column vector form of q, the sender masking matrix
-//		std::array<block, BASE_OT_COUNT> q;
+//		std::array<block, 128> q;
 //
 //		// set up the row form of the senders and receivers outputs
 //		mMessages[0].resize(numOTExt + 1);
@@ -50,10 +53,10 @@ namespace libBDX
 //
 //
 //		ByteStream buff;
-//		std::array<PRNG, BASE_OT_COUNT> gens;
+//		std::array<PRNG, 128> gens;
 //
 //
-//		for (int i = 0; i < BASE_OT_COUNT; i++)
+//		for (int i = 0; i < 128; i++)
 //		{
 //			gens[i].SetSeed(baseMessages[i]);
 //		}
@@ -62,7 +65,7 @@ namespace libBDX
 //		block seed;
 //		// not sure if its secure to do the commit here. Need to check the sec proof or commit
 //		// this after sending/receiving stuff.
-//		random_seed_commit(ByteArray(seed), chl, SEED_SIZE, prng.get_block());
+//		random_seed_commit(ByteArray(seed), chl, SEED_SIZE, prng.get<block>());
 //		PRNG commonPrng(seed);
 //
 //		block  chii, qi, qi2;
@@ -73,7 +76,7 @@ namespace libBDX
 //		SHA1 sha;
 //
 //#ifdef OTEXT_DEBUG
-//		Lg::out << "sender delta " << delta << Lg::endl;
+//		std::cout << "sender delta " << delta << std::endl;
 //		buff.append(delta);
 //		chl.asyncSendCopy(buff);
 //#endif
@@ -81,20 +84,20 @@ namespace libBDX
 //
 //		//assert(doneIdx == 0);
 //		u64 doneIdx = 0;
-//		u64 numBlocks = numOTExt / BASE_OT_COUNT;
+//		u64 numBlocks = numOTExt / 128;
 //		for (u64 blkIdx = 0; blkIdx < numBlocks; ++blkIdx)
 //		{
 //
 //			chl.recv(buff);
-//			assert(buff.size() == sizeof(block) * BASE_OT_COUNT);
+//			assert(buff.size() == sizeof(block) * 128);
 //
 //			// u = t0 + t1 + x 
 //			block* u = (block*)buff.data();
 //
-//			for (int colIdx = 0; colIdx < BASE_OT_COUNT; colIdx++)
+//			for (int colIdx = 0; colIdx < 128; colIdx++)
 //			{
 //				// a column vector sent by the receiver that hold the correction mask.
-//				q[colIdx] = gens[colIdx].get_block();
+//				q[colIdx] = gens[colIdx].get<block>();
 //
 //				if (baseChoiceBits[colIdx])
 //				{
@@ -111,7 +114,7 @@ namespace libBDX
 //			chl.asyncSendCopy(buff);
 //#endif
 //
-//			for (int blkRowIdx = 0; blkRowIdx < BASE_OT_COUNT; ++blkRowIdx, ++doneIdx)
+//			for (int blkRowIdx = 0; blkRowIdx < 128; ++blkRowIdx, ++doneIdx)
 //			{
 //				auto& msg0 = q[blkRowIdx];
 //				auto msg1 = q[blkRowIdx] ^ delta;
@@ -127,7 +130,7 @@ namespace libBDX
 //				sha.Final((u8*)&mMessages[1][doneIdx]);
 //
 //
-//				chii = commonPrng.get_block();
+//				chii = commonPrng.get<block>();
 //
 //				mul128(msg0, chii, &qi, &qi2);
 //				q1 = q1  ^ qi;
@@ -153,25 +156,25 @@ namespace libBDX
 //
 //		if (eq(t1, received_t) && eq(t2, received_t2))
 //		{
-//			//Lg::out << "\tCheck passed\n";
+//			//std::cout << "\tCheck passed\n";
 //		}
 //		else
 //		{
-//			Lg::out << "OT Ext Failed Correlation check failed" << Lg::endl;
-//			Lg::out << "rec t = " << __m128i_toString<u8>(received_t) << Lg::endl;
-//			Lg::out << "tmp1  = " << __m128i_toString<u8>(t1) << Lg::endl;
-//			Lg::out << "q  = " << __m128i_toString<u8>(q1) << Lg::endl;
+//			std::cout << "OT Ext Failed Correlation check failed" << std::endl;
+//			std::cout << "rec t = " << __m128i_toString<u8>(received_t) << std::endl;
+//			std::cout << "tmp1  = " << __m128i_toString<u8>(t1) << std::endl;
+//			std::cout << "q  = " << __m128i_toString<u8>(q1) << std::endl;
 //			throw std::runtime_error("Exit");;
 //		}
 //
-//		static_assert(BASE_OT_COUNT == 128, "expecting 128");
+//		static_assert(128 == 128, "expecting 128");
 //		mMessages[0].resize(numOTExt - 129);
 //		mMessages[1].resize(numOTExt - 129);
 //	}
 
-	void OTExtSender::Extend(
-		std::array<block, BASE_OT_COUNT>& baseMessages,
-		BitVector& baseChoiceBits,
+	void BDX_OTExtSender::Extend(
+        const ArrayView<block>& baseMessages,
+        const BitVector& baseChoiceBits,
 		u64 otCount,
 		PRNG& prng,
 		Channel& chl,
@@ -188,10 +191,10 @@ namespace libBDX
 		u8 hashBuff[SHA1::HashSize];
 
 
-		std::array<block, BASE_OT_COUNT> q;
+		std::array<block, 128> q;
 
-		std::array<PRNG, BASE_OT_COUNT> gens;
-		for (int i = 0; i < BASE_OT_COUNT; i++)
+		std::array<PRNG, 128> gens;
+		for (int i = 0; i < 128; i++)
 		{
 			gens[i].SetSeed(baseMessages[i]);
 		}
@@ -199,7 +202,7 @@ namespace libBDX
 
 		ByteStream buff;
 #ifdef OTEXT_DEBUG
-		Lg::out << "sender delta " << delta << Lg::endl;
+		std::cout << "sender delta " << delta << std::endl;
 		buff.append(delta);
 		chl.AsyncSendCopy(buff);
 #endif
@@ -213,7 +216,7 @@ namespace libBDX
 
 		Commit theirSeedComm;
 		chl.recv(theirSeedComm.data(), theirSeedComm.size());
-		block delta = baseChoiceBits.ToBlock();
+        block delta = baseChoiceBits.getArrayView<block>()[0];// .ToBlock();
 
 		//block delta = *(block*)mBaseChoiceBits.data();
 
@@ -221,20 +224,20 @@ namespace libBDX
 		auto correlatedMessagesIter = correlatedMessages.begin();;
 		//Lg::mMtx.lock();
 		// add one for the extra 128 OTs used for the correlation check
-		u64 numBlocks = numOTExt / BASE_OT_COUNT, dIdx(0);
+		u64 numBlocks = numOTExt / 128, dIdx(0);
 		for (u64 blkIdx = 0; blkIdx < numBlocks; ++blkIdx)
 		{
 
 			chl.recv(buff);
-			assert(buff.size() == sizeof(block) * BASE_OT_COUNT);
+			assert(buff.size() == sizeof(block) * 128);
 
 			// u = t0 + t1 + x 
 			auto u = buff.getArrayView<block>();
 
-			for (int colIdx = 0; colIdx < BASE_OT_COUNT; colIdx++)
+			for (int colIdx = 0; colIdx < 128; colIdx++)
 			{
 				// a column vector sent by the receiver that hold the correction mask.
-				q[colIdx] = gens[colIdx].get_block();
+				q[colIdx] = gens[colIdx].get<block>();
 
 				if (baseChoiceBits[colIdx])
 				{
@@ -243,7 +246,8 @@ namespace libBDX
 				}
 			}
 
-			eklundh_transpose128(q);
+			//eklundh_transpose128(q);
+            sse_transpose128(q);
 
 #ifdef OTEXT_DEBUG
 			buff.setp(0);
@@ -252,7 +256,7 @@ namespace libBDX
 #endif
 
 			u32 blkRowIdx = 0;
-			u32 stopIdx = (u32)std::min(u64(BASE_OT_COUNT), otCount - atomicDoneIdx.load(std::memory_order::memory_order_relaxed));
+			u32 stopIdx = (u32)std::min(u64(128), otCount - atomicDoneIdx.load(std::memory_order::memory_order_relaxed));
 			for (blkRowIdx = 0; blkRowIdx < stopIdx; ++blkRowIdx, ++dIdx)
 			{
 				*correlatedMessagesIter++ = (q[blkRowIdx]);
@@ -277,14 +281,14 @@ namespace libBDX
 				sha.Final(hashBuff);
 				mMessages[1][dIdx] = *(block*)hashBuff;
 
-				//Lg::out << "s " << dIdx << "  " << mMessages[0][dIdx] << "  " << mMessages[1][dIdx] << Lg::endl;
+				//std::cout << "s " << dIdx << "  " << mMessages[0][dIdx] << "  " << mMessages[1][dIdx] << std::endl;
 
 #endif // AES_HASH
 			}
 			
 			atomicDoneIdx = dIdx;
 
-			for (; blkRowIdx < BASE_OT_COUNT; ++blkRowIdx)
+			for (; blkRowIdx < 128; ++blkRowIdx)
 			{
 				*correlatedMessagesIter++ = (q[blkRowIdx]);
 			}
@@ -292,7 +296,7 @@ namespace libBDX
 
 		//Lg::mMtx.unlock();
 
-		block seed = prng.get_block();
+		block seed = prng.get<block>();
 		chl.asyncSend(&seed, sizeof(block));
 
 
@@ -302,25 +306,25 @@ namespace libBDX
 		if (Commit(theirSeed) != theirSeedComm)
 			throw std::runtime_error("bad commit " LOCATION);
 
-		//Lg::out << "seed " << seed << "  " << theirSeed << Lg::endl;
-		//random_seed_commit(ByteArray(seed), chl, SEED_SIZE, prng.get_block());
+		//std::cout << "seed " << seed << "  " << theirSeed << std::endl;
+		//random_seed_commit(ByteArray(seed), chl, SEED_SIZE, prng.get<block>());
 		PRNG commonPrng(seed ^ theirSeed);
 
-		//Lg::out << commonPrng.mIndexArray[0]<< " " << commonPrng.mBuffer[0] << " " << ZeroBlock << Lg::endl;
+		//std::cout << commonPrng.mIndexArray[0]<< " " << commonPrng.mBuffer[0] << " " << ZeroBlock << std::endl;
 
 		block  chii, qi, qi2;
 		block q2 = ZeroBlock;
 		block q1 = ZeroBlock;
 
-		//Lg::out << "sender size " << correlatedMessages.size() << Lg::endl;
+		//std::cout << "sender size " << correlatedMessages.size() << std::endl;
 		//Lg::mMtx.lock();
 		for (u64 i = 0; i < correlatedMessages.size(); ++i)
 		{
-			chii = commonPrng.get_block();
+			chii = commonPrng.get<block>();
 
-			//Lg::out << "s " << i << "  " << correlatedMessages[i] << "  " << (correlatedMessages[i] ^ delta) << Lg::endl;
+			//std::cout << "s " << i << "  " << correlatedMessages[i] << "  " << (correlatedMessages[i] ^ delta) << std::endl;
 
-			mul128(correlatedMessages[i], chii, &qi, &qi2);
+			mul128(correlatedMessages[i], chii, qi, qi2);
 			q1 = q1  ^ qi;
 			q2 = q2 ^ qi2;
 		}
@@ -336,52 +340,52 @@ namespace libBDX
 
 		block t1, t2;
 
-		//Lg::out << "delta  = " << delta << Lg::endl;
-		//Lg::out << "rec x  = " << received_x << Lg::endl << Lg::endl;
+		//std::cout << "delta  = " << delta << std::endl;
+		//std::cout << "rec x  = " << received_x << std::endl << std::endl;
 
 		// check t = x * Delta + q 
-		mul128(received_x, delta, &t1, &t2);
+		mul128(received_x, delta, t1, t2);
 
-		//Lg::out << "tmp1   = " << t1 << Lg::endl << Lg::endl;
-		//Lg::out << "q1     = " << q1 << Lg::endl << Lg::endl;
+		//std::cout << "tmp1   = " << t1 << std::endl << std::endl;
+		//std::cout << "q1     = " << q1 << std::endl << std::endl;
 
 
 		auto t1p = t1 ^ q1;
 		auto t2p = t2 ^ q2;
 
-		//Lg::out << "tmp1 p = " << t1p << Lg::endl << Lg::endl;
+		//std::cout << "tmp1 p = " << t1p << std::endl << std::endl;
 
 
 		if (eq(t1p, received_t) && eq(t2p, received_t2))
 		{
-			//Lg::out << "\t--------Check passed---------\n";
-			////Lg::out << "OT Ext Failed Correlation check failed" << Lg::endl;
-			//Lg::out << "delta  = " << delta << Lg::endl;
-			//Lg::out << "rec x  = " << received_x << Lg::endl << Lg::endl;
-			//Lg::out << "rec t  = " << received_t << Lg::endl;
-			//Lg::out << "rec t2 = " << received_t2 << Lg::endl;
-			//Lg::out << "tmp1 p = " << t1p << Lg::endl;
-			//Lg::out << "tmp1   = " << t1 << Lg::endl;
-			//Lg::out << "q      = " << q1 << Lg::endl;
+			//std::cout << "\t--------Check passed---------\n";
+			////std::cout << "OT Ext Failed Correlation check failed" << std::endl;
+			//std::cout << "delta  = " << delta << std::endl;
+			//std::cout << "rec x  = " << received_x << std::endl << std::endl;
+			//std::cout << "rec t  = " << received_t << std::endl;
+			//std::cout << "rec t2 = " << received_t2 << std::endl;
+			//std::cout << "tmp1 p = " << t1p << std::endl;
+			//std::cout << "tmp1   = " << t1 << std::endl;
+			//std::cout << "q      = " << q1 << std::endl;
 		}
 		else
 		{
-			Lg::out << "OT Ext Failed Correlation check failed" << Lg::endl <<Lg::endl;
+			std::cout << "OT Ext Failed Correlation check failed" << std::endl <<std::endl;
 
-			Lg::out << " t1p != received_t || t2p != received_t2" << Lg::endl;
-			Lg::out <<  t1p << "  "<< received_t <<"  || " << t2p << " "<< received_t2 << Lg::endl << Lg::endl;
+			std::cout << " t1p != received_t || t2p != received_t2" << std::endl;
+			std::cout <<  t1p << "  "<< received_t <<"  || " << t2p << " "<< received_t2 << std::endl << std::endl;
 
-			Lg::out << "delta  = " << delta << Lg::endl;
-			Lg::out << "rec x  = " << received_x << Lg::endl << Lg::endl;
-			Lg::out << "rec t  = " << received_t << Lg::endl;
-			//Lg::out << "rec t2 = " << received_t2 << Lg::endl;
-			Lg::out << "tmp1 p = " << t1p << Lg::endl;
-			//Lg::out << "tmp1   = " << t1 << Lg::endl;
-			//Lg::out << "q      = " << q1 << Lg::endl;
+			std::cout << "delta  = " << delta << std::endl;
+			std::cout << "rec x  = " << received_x << std::endl << std::endl;
+			std::cout << "rec t  = " << received_t << std::endl;
+			//std::cout << "rec t2 = " << received_t2 << std::endl;
+			std::cout << "tmp1 p = " << t1p << std::endl;
+			//std::cout << "tmp1   = " << t1 << std::endl;
+			//std::cout << "q      = " << q1 << std::endl;
 			throw std::runtime_error("Exit");;
 		}
 
-		static_assert(BASE_OT_COUNT == 128, "expecting 128");
+		static_assert(128 == 128, "expecting 128");
 	}
 
 }

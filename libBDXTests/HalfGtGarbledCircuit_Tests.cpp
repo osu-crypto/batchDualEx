@@ -8,10 +8,10 @@
 #include "Common.h"
 #include <array>
 #include "DebugCircuits.h"
-#include "Crypto/PRNG.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Crypto/PRNG.h"
+#include "cryptoTools/Common/Log.h"
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 void HalfGtGC_BasicGates_Test_Impl()
 {
@@ -41,12 +41,12 @@ void HalfGtGC_BasicGates_Test_Impl()
 #ifdef ADAPTIVE_SECURE
 		std::vector<block> masks(cd.NonXorGateCount() * 2);
 		PRNG prng(seed);
-		prng.get_u8s((u8*)masks.data(), masks.size() * sizeof(block));
+		prng.get((u8*)masks.data(), masks.size() * sizeof(block));
 
 		std::vector<block> maskCopy = masks;
 		//for (u64 i = 0; i < masks.size(); ++i)
 		//{
-		//	Lg::out << masks[i] << " " << maskCopy[i] << Lg::endl;
+		//	std::cout << masks[i] << " " << maskCopy[i] << std::endl;
 		//}
 
 		gc.Garble(cd, seed, indexArray, maskCopy);
@@ -102,7 +102,7 @@ void HalfGtGC_BitAdder_Test_Impl()
 #ifdef ADAPTIVE_SECURE
 	std::vector<block> masks(cd.NonXorGateCount() * 2);
 	PRNG prng(seed);
-	prng.get_u8s((u8*)masks.data(), masks.size() * sizeof(block));
+	prng.get((u8*)masks.data(), masks.size() * sizeof(block));
 
 	std::vector<block> maskCopy = masks;
 	gc.Garble(cd, seed, indexArray, maskCopy);
@@ -167,7 +167,7 @@ void HalfGtGC_BitAdder_Validate_Test_Impl()
 #ifdef ADAPTIVE_SECURE
 	std::vector<block> masks(cd.NonXorGateCount() * 2);
 	PRNG prng(seed);
-	prng.get_u8s((u8*)masks.data(), masks.size() * sizeof(block));
+	prng.get((u8*)masks.data(), masks.size() * sizeof(block));
 
 	std::vector<block> maskCopy = masks;
 	gc.Garble(cd, seed, indexArray, maskCopy);

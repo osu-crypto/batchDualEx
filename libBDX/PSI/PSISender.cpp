@@ -1,8 +1,8 @@
 #include "PSI/PSISender.h"
-#include "Crypto/Commit.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Crypto/Commit.h"
+#include "cryptoTools/Common/Log.h"
 
-namespace libBDX
+namespace osuCrypto
 {
 
 #ifdef GetMessage
@@ -11,9 +11,9 @@ namespace libBDX
 
 //#define PSI_DEBUG
 
-	extern	block PRF(const block& b, u64 i);
+	extern	block psiPRF(const block& b, u64 i);
 
-	void PsiSender::init(u64 inputSize, u64 wordSize, Channel & chl, I_OTExtSender & otSend, u64& otIdx, PRNG& prng)
+	void PsiSender::init(u64 inputSize, u64 wordSize, Channel & chl, BDX_OTExtSender & otSend, u64& otIdx, PRNG& prng)
 	{
 
 		mWordSize = wordSize;
@@ -58,22 +58,21 @@ namespace libBDX
 			mCommitedFuture.get();
 		if(idx == 0) timer.setTimePoint("commSendStart'");
 
-		std::unique_ptr<ByteStream> buff;
+		u64 myInputSize = mTheirPermute.size();
+		std::unique_ptr<ByteStream> buff(new ByteStream(sizeof(Commit) * myInputSize));
 		//for (u64 idx = 0; idx < theirInputSize; ++idx)
 		//{
 		BitVector input((u8*)&inputBlk, mWordSize);
 #ifdef PSI_DEBUG 
 		{
-			Lg::out << "send input[" << idx << "] " << input << Lg::endl << Lg::endl;
+			std::cout << "send input[" << idx << "] " << input << std::endl << std::endl;
 		}
 #endif
-		u64 myInputSize = mTheirPermute.size();
-		buff.reset(new ByteStream(sizeof(Commit) * myInputSize));
 
 		for (u64 j = 0, otIdx = mOTIdx; j < myInputSize; ++j)
 		{
 #ifdef PSI_DEBUG
-			Lg::out << "r=" << j << "  s=" << idx << Lg::endl;
+			std::cout << "r=" << j << "  s=" << idx << std::endl;
 #endif
 
 			block mask = ZeroBlock;
@@ -81,29 +80,30 @@ namespace libBDX
 			{
 				u8 bit = input[b] ^ mTheirPermute[j][b];
 #ifdef PSI_DEBUG
-				Lg::out 
+				std::cout 
 					<< "s m " << mOTSend->GetMessage(otIdx, bit) << "   " 
-				   	<< (u32)bit << "=" << (int)input[b] << "+" << (int)mTheirPermute[j][b] << " otIdx " << otIdx << Lg::endl 
-					<< "    " << mOTSend->GetMessage(otIdx, 1 ^ bit) << Lg::endl;
+				   	<< (u32)bit << "=" << (int)input[b] << "+" << (int)mTheirPermute[j][b] << " otIdx " << otIdx << std::endl 
+					<< "    " << mOTSend->GetMessage(otIdx, 1 ^ bit) << std::endl;
 #endif
 
 				mask = mask ^ mOTSend->GetMessage(otIdx, bit);
 			}
 			
 			TODO("fix false sharing. mPseVals[j][idx'!=idx] is written/read by other threads.");
-			mPseVals[j][idx]= PRF(mask, idx);
-			Commit comm(mPseVals[j][idx]);
+			mPseVals[j][idx]= psiPRF(mask, idx);
+
+            ((Commit*)buff->data())[j] = Commit(mPseVals[j][idx]);
 
 #ifdef PSI_DEBUG
 
-			Lg::out << "PRF(sum, "<<idx<<") " << mPseVals[j][idx]<< " , comm = " << comm << Lg::endl;
+			std::cout << "psiPRF(sum, "<<idx<<") " << mPseVals[j][idx]<< " , comm = " << comm << std::endl;
 #endif
 
-			buff->append(comm.data(), comm.size());
+			//buff->append(comm.data(), comm.size());
 		}
 
-		//chl.asyncSend(std::move(buff));
-		chl.send(*buff);
+		chl.asyncSend(std::move(buff));
+		//chl.send(*buff);
 		//}
 
 		u64 rem = --mRemainingPSIVals;

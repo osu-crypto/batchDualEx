@@ -1,19 +1,17 @@
 #pragma once 
-#include "OT/OTExtInterface.h"
-#include "Common/BitVector.h"
-#include "OT/BaseOT.h"
+#include "cryptoTools/Common/BitVector.h"
+//#include "OT/BaseOT.h"
 
-#include "Network/Channel.h"
+#include "cryptoTools/Network/Channel.h"
 
 #include <array>
 #include <vector>
 #ifdef GetMessage
 #undef GetMessage
 #endif
-namespace libBDX {
+namespace osuCrypto {
 
-	class OTExtSender :
-		public I_OTExtSender
+	class BDX_OTExtSender 
 	{
 	public: 
 
@@ -22,17 +20,17 @@ namespace libBDX {
 		//	PRNG& prng,
 		//	std::atomic<u64>& doneIdx) override;
 
-		const block& GetMessage(u64 idx, const u8 choice) const override;
+		const block& GetMessage(u64 idx, const u8 choice) const;
 
 
 
 		void Extend(
-			decltype(BaseOT::receiver_outputs)& base,
-			decltype(BaseOT::receiver_inputs)& bits,
+			const ArrayView<block>& base,
+			const BitVector& bits,
 			u64 numOTExt, 
 			PRNG& prng,
 			Channel& chl,
-			std::atomic<u64>& doneIdx) override;
+			std::atomic<u64>& doneIdx);
 
 	private:
 		//void SendCorrelationValues(BaseOT& baseOTs, u64 numOTExt, PRNG& prng);

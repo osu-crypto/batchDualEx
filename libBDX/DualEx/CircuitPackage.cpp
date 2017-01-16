@@ -1,8 +1,8 @@
 #include "CircuitPackage.h" 
-#include "Common/Logger.h"
-#include "Crypto/Commit.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Crypto/Commit.h"
 
-namespace libBDX {
+namespace osuCrypto {
 #ifdef GetMessage
 #undef GetMessage
 #endif
@@ -51,14 +51,13 @@ namespace libBDX {
 	{
 		mIdx = idx;
 
-		mCircuitSeed = prng.get_block();
+		mCircuitSeed = prng.get<block>();
 
 #ifdef ADAPTIVE_SECURE
-		mAdaptiveSecureMaskSeed = prng.get_block(); 
+		mAdaptiveSecureMaskSeed = prng.get<block>(); 
 
-		AES128::Key adaptiveSecureMaskKey;
-		AES128::EncKeyGen(mAdaptiveSecureMaskSeed, adaptiveSecureMaskKey);
-		AES128::EcbEncBlocks(adaptiveSecureMaskKey, indexArray.data(), adaptiveSecureTableMasks.data(), adaptiveSecureTableMasks.size());
+		AES adaptiveSecureMaskKey(mAdaptiveSecureMaskSeed);
+		adaptiveSecureMaskKey.ecbEncBlocks(indexArray.data(), adaptiveSecureTableMasks.size(), adaptiveSecureTableMasks.data());
 
 		// Garble the Circuit
 		mCircuit.GarbleSend(cir, mCircuitSeed, channel, wireBuff, indexArray, adaptiveSecureTableMasks);
@@ -66,16 +65,15 @@ namespace libBDX {
 		// Garble the Circuit
 		mCircuit.GarbleSend(cir, mCircuitSeed, channel, wireBuff);
 #endif
-		mKProbeWireSeed = prng.get_block();
+		mKProbeWireSeed = prng.get<block>();
 
 		mKProbeInputs.resize(theirKProbe.encodingSize());
 
 		assert(eq(indexArray[0], ZeroBlock));
-		//Lg::out << "kprobe " << mKProbeWireSeed << Lg::endl;
+		//std::cout << "kprobe " << mKProbeWireSeed << std::endl;
 
-		AES128::Key genKey;
-		AES128::EncKeyGen(mKProbeWireSeed, genKey);
-		AES128::EcbEncBlocks(genKey, indexArray.data(), mKProbeInputs.data(), theirKProbe.encodingSize());
+		AES genKey(mKProbeWireSeed);
+		genKey.ecbEncBlocks(indexArray.data(), theirKProbe.encodingSize(), mKProbeInputs.data());
 
 		u64 inputCommitSize = theirKProbe.encodingSize() * 2 * sizeof(Commit);
 		std::unique_ptr<ByteStream> buff(new ByteStream(inputCommitSize));
@@ -98,7 +96,7 @@ namespace libBDX {
 		Role role,
 		Channel& channel,
 		const KProbeMatrix& myKProbe,
-		I_OTExtReceiver& recvOT,
+		BDX_OTExtReceiver& recvOT,
 		u64& firstOTIdx)
 	{
 
@@ -176,7 +174,8 @@ namespace libBDX {
 			hash[0] = _mm_slli_epi64(out, 1) ^ tweaks[0];
 			hash[1] = _mm_slli_epi64(out ^ mCircuit.mGlobalOffset, 1) ^ tweaks[1];
 
-			AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, hash, enc);
+            mAesFixedKey.ecbEncTwoBlocks(hash, enc);
+			//AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, hash, enc);
 
 			hash[0] = hash[0] ^ enc[0]; // H( a0 )
 			hash[1] = hash[1] ^ enc[1]; // H( a1 )
@@ -221,7 +220,7 @@ namespace libBDX {
 	void CommCircuitPackage::initOT(
 		Channel & chl, 
 		const KProbeMatrix & kProbe, 
-		I_OTExtSender & sendOT, 
+		BDX_OTExtSender & sendOT, 
 		u64& otIdx,
 		u64 thierInputSize)
 	{
@@ -278,7 +277,7 @@ namespace libBDX {
 	{
 		// send them the seeds so they can decommit and check everything
 		channel.asyncSend(&mCircuitSeed, sizeof(block));
-		//Lg::out << "kk " << mKProbeWireSeed << Lg::endl; 
+		//std::cout << "kk " << mKProbeWireSeed << std::endl; 
 
 		channel.asyncSend(&mKProbeWireSeed, sizeof(block));
 
@@ -289,7 +288,7 @@ namespace libBDX {
 
 		// send them the OT messages.
 		//channel.asyncSend((u8*)&OTRecvMsg(0), mOTRecvChoices.size() * sizeof(block));
-		//Lg::out << mOTRecvChoices.size() << Lg::endl;
+		//std::cout << mOTRecvChoices.size() << std::endl;
 
 		std::unique_ptr<BitVector> buff(new BitVector(mOTRecvChoices));
 
@@ -328,9 +327,8 @@ namespace libBDX {
 		block adaptiveSecureMaskSeed;
 		channel.recv(&adaptiveSecureMaskSeed, sizeof(block));
 
-		AES128::Key adaptiveSecureMaskKey;
-		AES128::EncKeyGen(adaptiveSecureMaskSeed, adaptiveSecureMaskKey);
-		AES128::EcbEncBlocks(adaptiveSecureMaskKey, indexArray.data(), blockBuff.data(), blockBuff.size());
+		AES adaptiveSecureMaskKey(adaptiveSecureMaskSeed);
+		adaptiveSecureMaskKey.ecbEncBlocks(indexArray.data(), blockBuff.size(), blockBuff.data());
 
 		// re-garble the circuit and check its garbled tables
 		mCircuit.Validate(cir, circuitSeed, indexArray, blockBuff);
@@ -342,20 +340,19 @@ namespace libBDX {
 		assert (blockBuff.size() >= myKProbe.encodingSize());
 
 		assert(eq(indexArray[0], ZeroBlock));
-		//Lg::out << "kprobe " << kProbeWireSeed << Lg::endl;
+		//std::cout << "kprobe " << kProbeWireSeed << std::endl;
 
 
-		AES128::Key genKey;
-		AES128::EncKeyGen(kProbeWireSeed, genKey);
-		AES128::EcbEncBlocks(genKey, indexArray.data(), blockBuff.data(), myKProbe.encodingSize());
+		AES genKey(kProbeWireSeed);
+		genKey.ecbEncBlocks(indexArray.data(), myKProbe.encodingSize(), blockBuff.data());
 
  
 		for (u64 i = 0; i < myKProbe.encodingSize(); ++i)
 		{
 			if (mMyKProbeInputCommit[i][0] != Commit(blockBuff[i]))
-				throw invalid_commitment("mMyKProbeInputCommit");
+				throw std::runtime_error("mMyKProbeInputCommit" LOCATION);
 			if (mMyKProbeInputCommit[i][1] != Commit(blockBuff[i] ^ mCircuit.mGlobalOffset))
-				throw invalid_commitment("mMyKProbeInputCommit"); 
+				throw std::runtime_error("mMyKProbeInputCommit" LOCATION);
 		}
 
 
@@ -377,7 +374,8 @@ namespace libBDX {
 			hash[0] = _mm_slli_epi64(out, 1) ^ tweaks[0];
 			hash[1] = _mm_slli_epi64(out ^ (mCircuit.mGlobalOffset), 1) ^ tweaks[1];
 
-			AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, hash, enc);
+            mAesFixedKey.ecbEncTwoBlocks(hash, enc);
+			//AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, hash, enc);
 
 			hash[0] = hash[0] ^ enc[0]; // H( a0 )
 			hash[1] = hash[1] ^ enc[1]; // H( a1 )
@@ -390,7 +388,7 @@ namespace libBDX {
 		}
 		 
 		if (mOutputCommit != Commit(buff.data(), buff.size()))
-			throw invalid_commitment();
+			throw std::runtime_error(LOCATION);
 
 		// validate permuted inputs
 		u64 wireIdx = (role == First) ? cir.Inputs()[0] : 0;
@@ -426,10 +424,10 @@ namespace libBDX {
 			u8 permute = permuteBits[i];
 
 			if (Commit(labels[permute]) != mTheirInputCommits[i][0])
-				throw invalid_commitment("mInputCommits");
+				throw std::runtime_error("mInputCommits" LOCATION);
 
 			if (Commit(labels[1 ^ permute]) != mTheirInputCommits[i][1])
-				throw invalid_commitment("mInputCommits");
+				throw std::runtime_error("mInputCommits" LOCATION);
 		}
 
 		clear();

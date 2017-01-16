@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "Common/BitVector.h"
+#include "cryptoTools/Common/BitVector.h"
 #include "CircuitPackage.h"
 #include "Circuit/KProbeResistant.h"
 #include "PSI/PSIReceiver.h"
@@ -8,13 +8,13 @@
 #include "PSI/AsyncPsiReceiver.h"
 #include "PSI/AsyncPsiSender.h"
 #include <future>
-#include "Common/Timer.h"
+#include "cryptoTools/Common/Timer.h"
 
 //#define DUALEX_DEBUG
 //#define ASYNC_PSI 
 #define OFFLINE_KPROBE
 
-namespace libBDX
+namespace osuCrypto
 {
 	class Bucket
 	{
@@ -31,7 +31,7 @@ namespace libBDX
 			u64 psiSecParam,
 			std::vector<u64>::iterator& cirIdxIter,
 			std::vector<CommCircuitPackage>& circuits,
-			I_OTExtSender & otSend,
+            BDX_OTExtSender  & otSend,
 			PRNG& prng,
 			u64& otIdx,
 			Role role);
@@ -48,7 +48,7 @@ namespace libBDX
 			PRNG& prng,
 			const KProbeMatrix& theirKProbe,
 			const KProbeMatrix& myKprobe,
-			I_OTExtReceiver & otRecv,
+			BDX_OTExtReceiver & otRecv,
 			u64& otIdx,
 			const std::vector<block>& indexArray);
 			
@@ -72,7 +72,7 @@ namespace libBDX
 			Role role,
 			const BitVector& input,
 			std::vector<std::vector<block>>& labels, 
-			libBDX::Timer& timer);
+			osuCrypto::Timer& timer);
 
 		void sendCircuitInputs(
 			const Circuit&  cir,

@@ -1,10 +1,10 @@
 #pragma once
 #include "Circuit/Gate.h"
 #include "Circuit/Circuit.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 
 
-namespace libBDX {
+namespace osuCrypto {
 
 
 	class CircuitNode

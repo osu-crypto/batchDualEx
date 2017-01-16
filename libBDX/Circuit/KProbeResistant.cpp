@@ -1,7 +1,7 @@
 #include "KProbeResistant.h"
-#include "Common/BitVector.h"
+#include "cryptoTools/Common/BitVector.h"
 #include <fstream>
-#include "Common/Logger.h"
+#include "cryptoTools/Common/Log.h"
 
 #include "NTL/GF2.h"
 #include "NTL/GF2X.h"
@@ -10,7 +10,7 @@
 #include "NTL/GF2EX.h"
 
 
-namespace libBDX
+namespace osuCrypto
 {
 
 	static std::array<block, 2> sBlockMasks{ { ZeroBlock, _mm_set_epi64x((u64)-1, (u64)-1) } };
@@ -61,10 +61,10 @@ namespace libBDX
 		std::lock_guard<std::mutex> lock(loadOrBuildMtx);
 
 		std::stringstream ss;
-		ss << "./kProbe_data_" << inputSize << "_" << secParam << "_" << prng.get_block();
+		ss << "./kProbe_data_" << inputSize << "_" << secParam << "_" << prng.get<block>();
 		std::string filename = ss.str();
 
-		//Lg::out << "kprobe " << prng.get_block() << Lg::endl;
+		//std::cout << "kprobe " << prng.get<block>() << std::endl;
 
 		std::fstream file;
 		file.open(filename, std::ios::binary | std::ios::in);
@@ -153,7 +153,7 @@ namespace libBDX
 
 				// gets a random polynomial in F_{2^t}[x] of degree K-1
 				for (u64 i = 0; i < K - 1; ++i)
-					SetCoeff(p, static_cast<long>(i), prng.get_bit());
+					SetCoeff(p, static_cast<long>(i), prng.getBit());
 
 				// we calculate P(1)_2, ..., P(N)_2
 				for (u64 x = 1; x <= N; x++)
@@ -224,7 +224,7 @@ namespace libBDX
 		encodedLabels.clear();
 		encodedLabels.resize(m);
 
-		prng.get_u8s((u8*)encodedLabels.data(), encodedLabels.size() * sizeof(block));
+		prng.get((u8*)encodedLabels.data(), encodedLabels.size() * sizeof(block));
 
 		for (u64 i = 0; i < mMtx.size(); i++)
 		{

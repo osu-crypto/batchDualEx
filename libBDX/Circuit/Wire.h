@@ -1,10 +1,10 @@
 #pragma once 
 #include <array>
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include <ostream>
 #include <iomanip> 
 
-namespace libBDX{
+namespace osuCrypto{
    typedef u64 Wire;
 
    //struct  GarbledWire

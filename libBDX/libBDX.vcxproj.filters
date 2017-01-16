@@ -57,47 +57,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Common\Defines.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
     <ClCompile Include="Circuit\Circuit.cpp">
-      <Filter>Source Files\Circuit</Filter>
-    </ClCompile>
-    <ClCompile Include="Circuit\ClassicGarbledCircuit.cpp">
       <Filter>Source Files\Circuit</Filter>
     </ClCompile>
     <ClCompile Include="Circuit\HalfGtGarbledCircuit.cpp">
       <Filter>Source Files\Circuit</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\Tools.cpp">
-      <Filter>Source Files\OT</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\OTExtSender.cpp">
-      <Filter>Source Files\OT</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\OTExtReceiver.cpp">
-      <Filter>Source Files\OT</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\BaseOT.cpp">
-      <Filter>Source Files\OT</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\Math\modp.cpp">
-      <Filter>Source Files\OT\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\Math\Zp_Data.cpp">
-      <Filter>Source Files\OT\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\Math\bigint.cpp">
-      <Filter>Source Files\OT\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="OT\Math\DMC.cpp">
-      <Filter>Source Files\OT\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\BitVector.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\ByteStream.cpp">
-      <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="DualEx\DualExActor.cpp">
       <Filter>Source Files\DualEx</Filter>
@@ -105,29 +69,14 @@
     <ClCompile Include="DualEx\CircuitPackage.cpp">
       <Filter>Source Files\DualEx</Filter>
     </ClCompile>
-    <ClCompile Include="Common\Logger.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
     <ClCompile Include="DualEx\Bucket.cpp">
       <Filter>Source Files\DualEx</Filter>
     </ClCompile>
     <ClCompile Include="Circuit\KProbeResistant.cpp">
       <Filter>Source Files\Circuit</Filter>
     </ClCompile>
-    <ClCompile Include="Crypto\AES.cpp">
-      <Filter>Source Files\Crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="Crypto\Commit.cpp">
-      <Filter>Source Files\Crypto</Filter>
-    </ClCompile>
-    <ClCompile Include="Crypto\PRNG.cpp">
-      <Filter>Source Files\Crypto</Filter>
-    </ClCompile>
     <ClCompile Include="Circuit\DagCircuit.cpp">
       <Filter>Source Files\Circuit</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\Timer.cpp">
-      <Filter>Source Files\Common</Filter>
     </ClCompile>
     <ClCompile Include="PSI\PSIReceiver.cpp">
       <Filter>Source Files\PSI</Filter>
@@ -141,35 +90,11 @@
     <ClCompile Include="PSI\AsyncPsiSender.cpp">
       <Filter>Source Files\PSI</Filter>
     </ClCompile>
-    <ClCompile Include="Network\BtAcceptor.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\BtChannel.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\BtEndpoint.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\BtIOService.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\Channel.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Network\BtSocket.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
+    <ClCompile Include="OT\OTExtReceiver.cpp" />
+    <ClCompile Include="OT\OTExtSender.cpp" />
+    <ClCompile Include="OT\Tools.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common\Defines.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\Exceptions.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Circuit\ClassicGarbledCircuit.h">
-      <Filter>Header Files\Circuit</Filter>
-    </ClInclude>
     <ClInclude Include="Circuit\GarbledCircuit.h">
       <Filter>Header Files\Circuit</Filter>
     </ClInclude>
@@ -185,47 +110,11 @@
     <ClInclude Include="Circuit\Circuit.h">
       <Filter>Header Files\Circuit</Filter>
     </ClInclude>
-    <ClInclude Include="OT\OTExtInterface.h">
-      <Filter>Header Files\OT</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\OTExtReceiver.h">
-      <Filter>Header Files\OT</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\OTExtSender.h">
-      <Filter>Header Files\OT</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\Tools.h">
-      <Filter>Header Files\OT</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\BaseOT.h">
-      <Filter>Header Files\OT</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\Math\bigint.h">
-      <Filter>Header Files\OT\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\Math\DMC.h">
-      <Filter>Header Files\OT\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\Math\modp.h">
-      <Filter>Header Files\OT\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="OT\Math\Zp_Data.h">
-      <Filter>Header Files\OT\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\BitVector.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\ByteStream.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="DualEx\DualExActor.h">
       <Filter>Header Files\DualEx</Filter>
     </ClInclude>
     <ClInclude Include="DualEx\CircuitPackage.h">
       <Filter>Header Files\DualEx</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\Logger.h">
-      <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="DualEx\Bucket.h">
       <Filter>Header Files\DualEx</Filter>
@@ -239,23 +128,8 @@
     <ClInclude Include="Circuit\KProbeResistant.h">
       <Filter>Header Files\Circuit</Filter>
     </ClInclude>
-    <ClInclude Include="Crypto\sha1.h">
-      <Filter>Header Files\Crypto</Filter>
-    </ClInclude>
-    <ClInclude Include="Crypto\AES.h">
-      <Filter>Header Files\Crypto</Filter>
-    </ClInclude>
-    <ClInclude Include="Crypto\Commit.h">
-      <Filter>Header Files\Crypto</Filter>
-    </ClInclude>
-    <ClInclude Include="Crypto\PRNG.h">
-      <Filter>Header Files\Crypto</Filter>
-    </ClInclude>
     <ClInclude Include="Circuit\DagCircuit.h">
       <Filter>Header Files\Circuit</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\Timer.h">
-      <Filter>Header Files\Common</Filter>
     </ClInclude>
     <ClInclude Include="PSI\AsyncPsiReceiver.h">
       <Filter>Header Files\PSI</Filter>
@@ -263,29 +137,8 @@
     <ClInclude Include="PSI\AsyncPsiSender.h">
       <Filter>Header Files\PSI</Filter>
     </ClInclude>
-    <ClInclude Include="Network\BtAcceptor.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\BtChannel.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\BtEndpoint.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\BtIOService.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\BtSocket.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\Channel.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Network\Endpoint.h">
-      <Filter>Header Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\ArrayView.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
+    <ClInclude Include="OT\OTExtReceiver.h" />
+    <ClInclude Include="OT\OTExtSender.h" />
+    <ClInclude Include="OT\Tools.h" />
   </ItemGroup>
 </Project>

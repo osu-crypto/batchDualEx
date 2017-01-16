@@ -1,14 +1,14 @@
 #pragma once
 #include "GarbledCircuit.h"
 #include <unordered_map>
-#include "Common/Defines.h"
-#include "Crypto/AES.h"
-#include "Common/BitVector.h"
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Crypto/AES.h"
+#include "cryptoTools/Common/BitVector.h"
 
 #define ADAPTIVE_SECURE
 //#define STRONGEVAL
 
-namespace libBDX {
+namespace osuCrypto {
 	class HalfGtGarbledCircuit //:
 	   //public GarbledCircuit
 	{
@@ -28,8 +28,6 @@ namespace libBDX {
 #ifdef STRONGEVAL
 		std::vector<GarbledWire> mInternalWires;
 #endif
-
-		static const AES128::Key mAesFixedKey;
 
 		void Clear()
 		{

@@ -1,19 +1,19 @@
 #pragma once
-#include "Common/Defines.h"
-#include "Common/BitVector.h"
-#include "Crypto/PRNG.h"
-#include "Crypto/Commit.h"
-#include "Network/Channel.h"
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Crypto/PRNG.h"
+#include "cryptoTools/Crypto/Commit.h"
+#include "cryptoTools/Network/Channel.h"
 #include "OT/OTExtReceiver.h"
 #include "OT/OTExtSender.h"
 #include <vector>
-#include "Common/Timer.h"
+#include "cryptoTools/Common/Timer.h"
 #include <array>
 //#include "boost/multi_array.hpp"
 
 //#define ASYNC_PSI
 
-namespace libBDX
+namespace osuCrypto
 {
 
 
@@ -33,14 +33,14 @@ namespace libBDX
 
 		//PSISender(u64 wordSize) :mWordSize(wordSize) { assert(wordSize <= 128); }
 
-		void init(u64 size, u64 wordSize, Channel& chl, I_OTExtSender& otSend, u64& otIdx, PRNG& prng);
+		void init(u64 size, u64 wordSize, Channel& chl, BDX_OTExtSender& otSend, u64& otIdx, PRNG& prng);
 
 		//boost::multi_array<block, 2> mPseVals;
 		std::vector<std::vector<block>> mPseVals;
 
 
 
-		I_OTExtSender* mOTSend;
+        BDX_OTExtSender* mOTSend;
 		u64 mOTIdx;
 		Timer timer;
 		//const std::vector<block>* mInputs;

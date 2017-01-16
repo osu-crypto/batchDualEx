@@ -3,14 +3,14 @@
 #include "CircuitPackage.h"
 #include "Circuit/Circuit.h"
 #include "Circuit/HalfGtGarbledCircuit.h"
-#include "Network/Channel.h"
-#include "Common/Defines.h"
-#include "OT/OTExtReceiver.h"
-#include "OT/OTExtSender.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Common/Defines.h"
+#include "libOTe/TwoChooseOne/KosOtExtReceiver.h"
+#include "libOTe/TwoChooseOne/KosOtExtSender.h"
 #include "Circuit/KProbeResistant.h"
 
 //#define DUALEX_DEBUG
-namespace libBDX
+namespace osuCrypto
 {
 
 	class EvalBuff
@@ -30,9 +30,9 @@ namespace libBDX
 
 	class DualExActor
 	{
-
-		std::vector<OTExtReceiver> mOTRecv;
-		std::vector<OTExtSender> mOTSend;
+        
+		std::vector<BDX_OTExtReceiver> mOTRecv;
+		std::vector<BDX_OTExtSender> mOTSend;
 		std::vector<Channel*> mRecvMainChls,mRecvSubChls, mSendSubChls;// , &mPsiChl;
 		//std::vector<std::vector<Channel*>> mPSISendChls, mPSIRecvChls;
 		//std::unique_ptr<std::mutex[]> mMtxs;

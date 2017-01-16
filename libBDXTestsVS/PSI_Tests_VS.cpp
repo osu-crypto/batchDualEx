@@ -6,7 +6,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace libBDXTests
+namespace osuCryptoTests
 {
 	TEST_CLASS(PSI_Tests)
 	{

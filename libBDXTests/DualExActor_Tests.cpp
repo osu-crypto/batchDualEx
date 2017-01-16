@@ -1,19 +1,16 @@
 #include "DualExActor_Tests.h"
-#include "Network/BtEndpoint.h"
+#include "cryptoTools/Network/BtEndpoint.h"
 
 #include "Common.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include "DualEx/DualExActor.h"
-#include "Network/Channel.h"
-#include "OTOracleReceiver.h"
-#include "OTOracleSender.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Common/Log.h"
 #include "DebugCircuits.h"
 
-#include "cryptopp/aes.h"
-#include "cryptopp/modes.h"
 //#include "MyAssert.h"
 #include <array>
+using namespace osuCrypto;
 
 void DualExActor_BitAdder_Complete_Test_Impl()
 {
@@ -22,7 +19,7 @@ void DualExActor_BitAdder_Complete_Test_Impl()
 		numOpened = 4,
 		psiSecParam = 40;
 
-	Lg::setThreadName("Actor1");
+	setThreadName("Actor1");
 	//InitDebugPrinting("..\\test.out");
 
 	Circuit c = AdderCircuit(4);
@@ -38,7 +35,7 @@ void DualExActor_BitAdder_Complete_Test_Impl()
 	{
 
 		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		PRNG prng1(prng0.get_block());
+		PRNG prng1(prng0.get<block>());
 		BitVector input0(4);
 		*input0.data() = 2;
 
@@ -49,7 +46,7 @@ void DualExActor_BitAdder_Complete_Test_Impl()
 		*expected.data() = 5;
 
 		auto thrd = std::thread([&]() {
-			Lg::setThreadName("Actor0");
+			setThreadName("Actor0");
 
 			DualExActor actor0(c, Role::First, numExe, bucketSize, numOpened, psiSecParam, ep0);
 			Timer timer;
@@ -62,8 +59,8 @@ void DualExActor_BitAdder_Complete_Test_Impl()
 				for (u64 b = 0; b < expected.size(); ++b)
 					if (output[b] != expected[b])
 					{
-						//Lg::out << input0 << " " << input1 << "  " << expected << Lg::endl;
-						//Lg::out << "but got " << output << Lg::endl;
+						//std::cout << input0 << " " << input1 << "  " << expected << std::endl;
+						//std::cout << "but got " << output << std::endl;
 						throw UnitTestFail();
 					}
 			}
@@ -98,7 +95,7 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 		numConcurEvals = 4,
 		psiSecParam = 40;
 
-	Lg::setThreadName("Actor1");
+	setThreadName("Actor1");
 	//InitDebugPrinting("..\\test.out");
 
 	Circuit c = AdderCircuit(4);
@@ -110,7 +107,7 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 	//Channel& senderChannel = ep0.addChannel(name, name);
 	{
 		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		PRNG prng1(prng0.get_block());
+		PRNG prng1(prng0.get<block>());
 		BitVector input0(4);
 		*input0.data() = 2;
 
@@ -121,7 +118,7 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 		*expected.data() = 5;
 
 		auto thrd = std::thread([&]() {
-			Lg::setThreadName("Actor0");
+			setThreadName("Actor0");
 
 			DualExActor actor0(c, Role::First, numExe, bucketSize, numOpened, psiSecParam, ep0);
 			Timer timer;
@@ -130,7 +127,7 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 
 			for (u64 j = 0; j < numConcurEvals; ++j)
 			{
-				block seed = prng0.get_block();
+				block seed = prng0.get<block>();
 				evalThreads[j] = std::thread([&, j, seed]() {
 					Timer timerj;
 					PRNG prng(seed);
@@ -157,7 +154,7 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 
 		for (u64 j = 0; j < numConcurEvals; ++j)
 		{
-			block seed = prng1.get_block();
+			block seed = prng1.get<block>();
 			evalThreads[j] = std::thread([&actor1, j, seed, numExe, numConcurEvals, &input1, &expected]() {
 				Timer timerj;
 				PRNG prng(seed);

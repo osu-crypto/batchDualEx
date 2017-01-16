@@ -1,7 +1,7 @@
-#include "Common/Defines.h"
-#include "Network/Channel.h"
-#include "Common/Timer.h"
-#include "Network/BtEndpoint.h"
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Common/Timer.h"
+#include "cryptoTools/Network/BtEndpoint.h"
 
 #include <vector>
 #include <thread>
@@ -14,11 +14,11 @@
 
 #include "Common.h"
 //#include "OT/OTExtension.h"
-#include "Common/Exceptions.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Exceptions.h"
+#include "cryptoTools/Common/Defines.h"
 #include "Circuit/Circuit.h"
 #include "DualEx/DualExActor.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Common/Log.h"
 #include "DebugCircuits.h"
 
 #include <stdlib.h>
@@ -31,7 +31,7 @@
 #include "UnitTests.h"
 
 using namespace ez;
-using namespace libBDX;
+using namespace osuCrypto;
 
 void Eval(std::string, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval, Timer& timer);
 
@@ -53,7 +53,7 @@ void pingTest(Endpoint& netMgr, Role role)
 			chl.recv(buff);
 			if (buff.size() != 1)
 			{
-				Lg::out << std::string((char*)buff.data(), (char*)buff.data() + buff.size()) << Lg::endl;
+				std::cout << std::string((char*)buff.data(), (char*)buff.data() + buff.size()) << std::endl;
 				throw std::runtime_error("");
 			}
 		}
@@ -63,7 +63,7 @@ void pingTest(Endpoint& netMgr, Role role)
 
 		auto ping = std::chrono::duration_cast<std::chrono::microseconds>(recv - send).count() / count;
 
-		Lg::out << "ping " << ping << " us" << Lg::endl;
+		std::cout << "ping " << ping << " us" << std::endl;
 
 		send = timer.setTimePoint("");
 		chl.asyncSend(oneMB.data(), oneMB.size());
@@ -78,7 +78,7 @@ void pingTest(Endpoint& netMgr, Role role)
 		if (buff.size() != oneMB.size()) throw std::runtime_error("");
 
 
-		Lg::out << (1000000 / time) << " Mbps" << Lg::endl;
+		std::cout << (1000000 / time) << " Mbps" << std::endl;
 	}
 	else
 	{
@@ -111,7 +111,7 @@ void pingTest(Endpoint& netMgr, Role role)
 
 		double time = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(recv - send).count() - ping);
 
-		Lg::out << (1000000 / time) << " Mbps" << Lg::endl;
+		std::cout << (1000000 / time) << " Mbps" << std::endl;
 
 	}
 
@@ -123,10 +123,8 @@ void commandLineMain(int argc, const char** argv)
 	block b;
 	Timer timer;
 
-	AES128::Key key;
-	AES128::EncKeyGen(b, key);
-
-	AES128::EcbEncBlock(key, b, b);
+	AES key(ZeroBlock);
+	key.ecbEncBlock(b, b);
 
 
 
@@ -284,13 +282,13 @@ void commandLineMain(int argc, const char** argv)
 		numThreadsPerEval = bucketSize;
 	}
 
-	Lg::out << "role: " << (int)role
+	std::cout << "role: " << (int)role
 		<< "  numExe:" << numExec
 		<< "  bucketSize:" << bucketSize
 		<< "  numOpen:" << numOpened
 		<< "  ConcurrentSetups:" << numConcurrentSetups
 		<< "  ConcurrentEvals:" << numConcurrentEvals
-		<< "  numThreadsPerEval:" << numThreadsPerEval << Lg::endl;
+		<< "  numThreadsPerEval:" << numThreadsPerEval << std::endl;
 
 
 	if (opt.get("-u")->isSet)
@@ -308,7 +306,7 @@ void commandLineMain(int argc, const char** argv)
 	Circuit cir;
 
 
-	Lg::out << "reading circuit" << Lg::endl;
+	std::cout << "reading circuit" << std::endl;
 
 	{
 		std::fstream fStrm(file);
@@ -316,7 +314,7 @@ void commandLineMain(int argc, const char** argv)
 		{
 			boost::filesystem::path getcwd(boost::filesystem::current_path());
 			std::cout << "Current path is: " << getcwd << std::endl;
-			Lg::out << "failed to open circuit file: " << file << Lg::endl;
+			std::cout << "failed to open circuit file: " << file << std::endl;
 
 			throw std::runtime_error("");
 		}
@@ -324,12 +322,12 @@ void commandLineMain(int argc, const char** argv)
 		cir.readBris(fStrm);
 	}
 
-	Lg::out << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << Lg::endl;
+	std::cout << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << std::endl;
 
 	BtIOService ios(0);
 	BtEndpoint netMgr(ios, "127.0.0.1", 1212, role, "ss");
 	//NetworkManager netMgr(hostname, portnum, 6, role);
-	Lg::out << "Connecting..." << Lg::endl;
+	std::cout << "Connecting..." << std::endl;
 
 
 	if (opt.get("-i")->isSet)
@@ -343,32 +341,32 @@ void commandLineMain(int argc, const char** argv)
 
 	PRNG prng(_mm_set_epi64x(0, role));
 
-	Lg::out << "Initializing..." << Lg::endl;
+	std::cout << "Initializing..." << std::endl;
 
 	auto initStart = timer.setTimePoint("Init Start");
 
 	actor.init(prng, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, timer);
 
 	if (true) {
-		Lg::out << "Input request size         " << cir.Inputs()[role] / 8 << " bytes" << Lg::endl;
-		Lg::out << "My input size              " << cir.Inputs()[role] * sizeof(block) * bucketSize << " bytes" << Lg::endl;
-		Lg::out << "Their input size           " << cir.Inputs()[1 ^ role] * sizeof(block) * bucketSize << " bytes" << Lg::endl;
+		std::cout << "Input request size         " << cir.Inputs()[role] / 8 << " bytes" << std::endl;
+		std::cout << "My input size              " << cir.Inputs()[role] * sizeof(block) * bucketSize << " bytes" << std::endl;
+		std::cout << "Their input size           " << cir.Inputs()[1 ^ role] * sizeof(block) * bucketSize << " bytes" << std::endl;
 
 #ifdef ASYNC_PSI
-		Lg::out << "Async PSI commit send size " << bucketSize * psiSecParam / 8 << " bytes" << Lg::endl;
-		Lg::out << "Async PSI commit recv size " << bucketSize * psiSecParam / 8 << " bytes" << Lg::endl;
-		Lg::out << "Translation open size      " << sizeof(block) << " bytes" << Lg::endl;
-		Lg::out << "Async PSI Open size        " << sizeof(block) * psiSecParam *  bucketSize * bucketSize << " bytes" << Lg::endl << Lg::endl;
+		std::cout << "Async PSI commit send size " << bucketSize * psiSecParam / 8 << " bytes" << std::endl;
+		std::cout << "Async PSI commit recv size " << bucketSize * psiSecParam / 8 << " bytes" << std::endl;
+		std::cout << "Translation open size      " << sizeof(block) << " bytes" << std::endl;
+		std::cout << "Async PSI Open size        " << sizeof(block) * psiSecParam *  bucketSize * bucketSize << " bytes" << std::endl << std::endl;
 #else
-		Lg::out << "PSI OT permute size        " << bucketSize * psiSecParam / 8 << " bytes" << Lg::endl;
-		Lg::out << "PSI sender commit size     " << bucketSize * bucketSize * sizeof(block) << " bytes" << Lg::endl;
-		Lg::out << "Translation open size      " << sizeof(block) << " bytes" << Lg::endl;
-		Lg::out << "Sync PSI Open size         " << sizeof(block) *  bucketSize * bucketSize << " bytes" << Lg::endl << Lg::endl;
+		std::cout << "PSI OT permute size        " << bucketSize * psiSecParam / 8 << " bytes" << std::endl;
+		std::cout << "PSI sender commit size     " << bucketSize * bucketSize * sizeof(block) << " bytes" << std::endl;
+		std::cout << "Translation open size      " << sizeof(block) << " bytes" << std::endl;
+		std::cout << "Sync PSI Open size         " << sizeof(block) *  bucketSize * bucketSize << " bytes" << std::endl << std::endl;
 #endif
 }
 
 
-	Lg::out << "exec" << Lg::endl;
+	std::cout << "exec" << std::endl;
 
 	// do one without the timing to sync the two parties...
 	BitVector input(cir.Inputs()[role]);
@@ -388,10 +386,10 @@ void commandLineMain(int argc, const char** argv)
 	for (u64 j = 0; j < numConcurrentEvals; ++j)
 	{
 
-		block seed = prng.get_block();
+		block seed = prng.get<block>();
 		evalThreads[j] = std::thread([&, j, seed]() {
 
-			//Lg::out << "main " << j << " / " << numConcurrentEvals << Lg::endl;
+			//std::cout << "main " << j << " / " << numConcurrentEvals << std::endl;
 			
 			Timer t2;
 			auto last = t2.setTimePoint("");
@@ -401,7 +399,7 @@ void commandLineMain(int argc, const char** argv)
 				
 				//std::this_thread::sleep_for(std::chrono::mi(j));
 				
-				//Lg::out << "Exec" << i << Lg::endl;
+				//std::cout << "Exec" << i << std::endl;
 				actor.execute(i, prng, input, timer);
 
 				auto now = t2.setTimePoint("");
@@ -412,7 +410,7 @@ void commandLineMain(int argc, const char** argv)
 				last = now;
 			}
 			
-			//Lg::out << "main " << j << " done"<<Lg::endl;
+			//std::cout << "main " << j << " done"<<std::endl;
 			
 		});
 	} 
@@ -476,21 +474,21 @@ void Eval(
 {
 	u64 psiSecParam = 40;
 
-	Lg::setThreadName("Actor1");
+	setThreadName("Actor1");
 
 	std::fstream in;
 	in.open(filepath);
 
 	Circuit c;
 
-	Lg::out << "reading circuit" << Lg::endl;
+	std::cout << "reading circuit" << std::endl;
 	{
 		std::fstream fStrm(filepath);
 		if (fStrm.is_open() == false)
 		{
 			boost::filesystem::path getcwd(boost::filesystem::current_path());
 			std::cout << "Current path is: " << getcwd << std::endl;
-			Lg::out << "failed to open circuit file: " << filepath << Lg::endl; 
+			std::cout << "failed to open circuit file: " << filepath << std::endl; 
 				
 			throw std::runtime_error("");
 		}
@@ -499,9 +497,9 @@ void Eval(
 	}
 
 
-	Lg::out << "circuit inputs " << c.Inputs()[0] << " " << c.Inputs()[1] << Lg::endl;
-	Lg::out << "circuit num gates " << c.Gates().size() << Lg::endl;
-	Lg::out << "circuit num and gates " << c.NonXorGateCount() << Lg::endl;
+	std::cout << "circuit inputs " << c.Inputs()[0] << " " << c.Inputs()[1] << std::endl;
+	std::cout << "circuit num gates " << c.Gates().size() << std::endl;
+	std::cout << "circuit num and gates " << c.NonXorGateCount() << std::endl;
 
 	//c = AdderCircuit(4);
 	//c.xorShareInputs();
@@ -514,14 +512,14 @@ void Eval(
 	//NetworkManager netMgr0("127.0.0.1", 1212, 4, true);
 
 	PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-	PRNG prng1(prng0.get_block());
+	PRNG prng1(prng0.get<block>());
 
 
 	BitVector expected(5);
 	*expected.data() = 5;
 
 	auto thrd = std::thread([&]() {
-		Lg::setThreadName("Actor0");
+		setThreadName("Actor0");
 
 		DualExActor actor0(c, Role::First, numExe, bucketSize, numOpened, psiSecParam, netMgr0);
 
@@ -536,7 +534,7 @@ void Eval(
 		for (u64 j = 0; j < numConcurrentEvals; ++j)
 		{
 
-			block seed = prng0.get_block();
+			block seed = prng0.get<block>();
 			evalThreads[j] = std::thread([&, j, seed]() {
 				Timer t2;
 				PRNG prng(seed);
@@ -557,7 +555,7 @@ void Eval(
 
 	DualExActor actor1(c, Role::Second, numExe, bucketSize, numOpened, psiSecParam, netMgr1);
 
-	Lg::out << "Initializing..." << Lg::endl;
+	std::cout << "Initializing..." << std::endl;
 
 	auto initStart = timer.setTimePoint("initStart");
 
@@ -570,7 +568,7 @@ void Eval(
 	BitVector input1(c.Inputs()[1]);
 	//*input1.data() = 3;
 
-	Lg::out << "exec " << Lg::endl;
+	std::cout << "exec " << std::endl;
 
 
 	auto min = initFinish - initStart;
@@ -578,7 +576,7 @@ void Eval(
 
 	for (u64 j = 0; j < numConcurrentEvals; ++j)
 	{
-		block seed = prng1.get_block();
+		block seed = prng1.get<block>();
 		evalThreads[j] = std::thread([&, j, seed]() {
 			Timer t2;
 			auto last = t2.setTimePoint("");;
@@ -608,7 +606,7 @@ void Eval(
 	std::cout << "exec Time " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / numExe << std::endl;
 	std::cout << "min time  " << std::chrono::duration_cast<std::chrono::microseconds>(min).count() << " us" << std::endl;
 
-	Lg::out << timer;
+	std::cout << timer;
 
 	actor1.close();
 
@@ -627,7 +625,7 @@ int main(int argc, const char** argv)
 	#ifdef _MSC_VER
 		testData = "../..";
 	#else
-		testData = "/mnt/hgfs/libBDX";
+		testData = "/mnt/hgfs/osuCrypto";
 	#endif
 
 

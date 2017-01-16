@@ -1,35 +1,36 @@
 #include "Common.h"
 #include <fstream>
 #include <cassert>
-#include "Common/Logger.h"
+#include "cryptoTools/Common/Log.h"
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 static std::fstream* file = nullptr;
 std::string testData("../..");
 
 void InitDebugPrinting(std::string filePath)
 {
-	Lg::out << "changing sink" << Lg::endl;
+    std::cout << "changing sink" << std::endl;
 
-	if (file == nullptr)
-	{
-		file = new std::fstream;
-	}
-	else
-	{
-		file->close();
-	}
+    if (file == nullptr)
+    {
+        file = new std::fstream;
+    }
+    else
+    {
+        file->close();
+    }
 
-	file->open(filePath, std::ios::trunc | std::ofstream::out);
-	if (!file->is_open())
-		throw std::runtime_error("");
+    file->open(filePath, std::ios::trunc | std::ofstream::out);
 
+    if (!file->is_open())
+        throw UnitTestFail();
 
-	//time_t now = time(0);
+    //time_t now = time(0);
 
-	Lg::SetSink(*file);
-
+    std::cout.rdbuf(file->rdbuf());
+    std::cerr.rdbuf(file->rdbuf());
+    //Log::SetSink(*file); 
 	
-	//Lg::out << "Test - " << ctime(&now) << Lg::endl;
+	//std::cout << "Test - " << ctime(&now) << std::endl;
 }

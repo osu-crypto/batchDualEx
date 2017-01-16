@@ -1,12 +1,12 @@
 #include "PSI/AsyncPsiReceiver.h"
-#include "Crypto/Commit.h"
-#include "Common/Logger.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Crypto/Commit.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Common/Defines.h"
 
 
-namespace libBDX
+namespace osuCrypto
 {
-	extern block PRF(const block& b, u64 i);
+	extern block psiPRF(const block& b, u64 i);
 
 
 	u64 AsyncPsiReceiver::PsiOTCount(u64 inputSize, u64 wordSize)
@@ -14,7 +14,7 @@ namespace libBDX
 		return inputSize * inputSize * wordSize;
 	}
 
-	void AsyncPsiReceiver::init(u64 inputSize, u64 wordSize, Channel& chl, I_OTExtReceiver& otRecv, u64& otIdx)
+	void AsyncPsiReceiver::init(u64 inputSize, u64 wordSize, Channel& chl, BDX_OTExtReceiver& otRecv, u64& otIdx)
 		//void AsyncPsiReceiver::init(u64 inputSize, u64 wordSize, Channel & chl, ArrayView<block> otMessages, BitVector otChoices)
 	{
 		mWordSize = wordSize;
@@ -70,7 +70,7 @@ namespace libBDX
 
 		//}
 
-		//Lg::out << "recv " + ToString(otStartIdx) << Lg::endl;
+		//std::cout << "recv " + ToString(otStartIdx) << std::endl;
 
 
 		mTheirPermute.resize(theirInputSize);
@@ -110,12 +110,12 @@ namespace libBDX
 
 		//{
 		//	std::lock_guard<std::mutex> lock(Lg::mMtx);
-		//	Lg::out << "recv "<<(u16)this << "   have [" << idx << "] " << mMyPermute[idx] << Lg::endl;
-		//	Lg::out << "recv " << (u16)this << "   input[" << idx << "] " << input << Lg::endl;
+		//	std::cout << "recv "<<(u16)this << "   have [" << idx << "] " << mMyPermute[idx] << std::endl;
+		//	std::cout << "recv " << (u16)this << "   input[" << idx << "] " << input << std::endl;
 
 		mMyPermute[idx] ^= input;
 
-		//	Lg::out << "recv " << (u16)this << "   permu[" << idx << "] " << mMyPermute[idx] << Lg::endl;
+		//	std::cout << "recv " << (u16)this << "   permu[" << idx << "] " << mMyPermute[idx] << std::endl;
 		//}
 		chl.asyncSend(mMyPermute[idx].data(), mMyPermute[idx].sizeBytes());
 		//	}
@@ -188,29 +188,29 @@ namespace libBDX
 				//buff.consume(rand);
 
 				theirPse = theirPse ^ *share;
-				myPse = myPse ^ PRF(otRecv.GetMessage(otIdx), j);
+				myPse = myPse ^ psiPRF(otRecv.GetMessage(otIdx), j);
 				u8 bit = mMyPermute[idx][b] ^ mTheirPermute[j][b];
 
 				//u64 c = otRecv.mChoiceBits[otIdx] ;
 
-				//Lg::out << "  recv " << (u16)this << "   r" << idx << " s" << j << " b" << b << "  bit " << (int)bit << "=" << (int)mMyPermute[idx][b] << "+" << (int)mTheirPermute[j][b] 
-				//	<< " " << otRecv.GetMessage(otIdx) << " ( " << c <<")"   << " , " << j << "  -> " << PRF(otRecv.GetMessage(otIdx), j) << "  otidx " << otIdx << Lg::endl;
+				//std::cout << "  recv " << (u16)this << "   r" << idx << " s" << j << " b" << b << "  bit " << (int)bit << "=" << (int)mMyPermute[idx][b] << "+" << (int)mTheirPermute[j][b] 
+				//	<< " " << otRecv.GetMessage(otIdx) << " ( " << c <<")"   << " , " << j << "  -> " << psiPRF(otRecv.GetMessage(otIdx), j) << "  otidx " << otIdx << std::endl;
 
 				if (Commit(*share) != mCommits[idx][j][b][bit])
 				{
 					//std::lock_guard<std::mutex> lock(Lg::mMtx);
 
-					//Lg::out << "P" << (int)role << " cmp r=" << idx << " s=" << j << "  " << mCommits[idx][j][b][bit] << "  " << Commit(*share) << Lg::endl;
-					//Lg::out << "P" << (int)role << " cmp  mTheirPermute["<<j<<"] = " << mTheirPermute[j] << Lg::endl;
-					throw invalid_commitment();
+					//std::cout << "P" << (int)role << " cmp r=" << idx << " s=" << j << "  " << mCommits[idx][j][b][bit] << "  " << Commit(*share) << std::endl;
+					//std::cout << "P" << (int)role << " cmp  mTheirPermute["<<j<<"] = " << mTheirPermute[j] << std::endl;
+					throw std::runtime_error(LOCATION);
 				}
 			}
-			//Lg::out << "recv  " << (u16)this << "  r " << idx << " s " << j << "  " << myPse << "  " << theirPse << Lg::endl << Lg::endl;
+			//std::cout << "recv  " << (u16)this << "  r " << idx << " s " << j << "  " << myPse << "  " << theirPse << std::endl << std::endl;
 
 			if (eq(myPse, theirPse))
 			{
 				// My i'th element matches their j'th
-				//Lg::out << "match i=" << idx << "  j=" << j << Lg::endl;
+				//std::cout << "match i=" << idx << "  j=" << j << std::endl;
 				//return true;
 				//output[i] = 1;
 				ret = true;

@@ -18,14 +18,14 @@ error:
 endif
 
 
-PRIMARY_LIB=$(BINARYDIR)/libBDX.a 
-PRIMARYTESTS_LIB=$(BINARYDIR)/libBDXTests.a
+PRIMARY_LIB=$(BINARYDIR)/osuCrypto.a 
+PRIMARYTESTS_LIB=$(BINARYDIR)/osuCryptoTests.a
 
 SRC=.
 
 FRONTEND_DIR=$(SRC)/FrontEnd
-PRIMARY_DIR=$(SRC)/libBDX
-PRIMARYTESTS_DIR=$(SRC)/libBDXTests
+PRIMARY_DIR=$(SRC)/osuCrypto
+PRIMARYTESTS_DIR=$(SRC)/osuCryptoTests
 
 
 FRONTEND_SRC=$(wildcard $(FRONTEND_DIR)/*.cpp)
@@ -56,8 +56,8 @@ TPL=thirdparty/linux
 BOOST=thirdparty/linux/boost
 
 
-#INC=-I./libBDX/\
-#    -I./libBDXTests/\
+#INC=-I./osuCrypto/\
+#    -I./osuCryptoTests/\
 #    -I$(TPL)\
 #    -I$(BOOST)/includes/
 

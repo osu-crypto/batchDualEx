@@ -1,10 +1,10 @@
 #include "Bucket.h"
-#include "Common/Logger.h"
-#include "Common/Timer.h"
+#include "cryptoTools/Common/Log.h"
+#include "cryptoTools/Common/Timer.h"
 
 //#define DUALEX_DEBUG  
 
-namespace libBDX
+namespace osuCrypto
 {
 
 
@@ -37,7 +37,7 @@ namespace libBDX
 		u64 psiSecParam,
 		std::vector<u64>::iterator& cirIdxIter,
 		std::vector<CommCircuitPackage>& circuits,
-		I_OTExtSender & otSend, 
+        BDX_OTExtSender& otSend,
 		PRNG& prng,
 		u64& otIdx,
 		Role role)
@@ -97,7 +97,7 @@ namespace libBDX
 		PRNG& prng,
 		const KProbeMatrix& theirKprobe,
 		const KProbeMatrix& myKprobe,
-		I_OTExtReceiver & otRecv,
+		BDX_OTExtReceiver & otRecv,
 		u64& otIdx,
 		const std::vector<block>& indexArray)
 	{
@@ -110,17 +110,16 @@ namespace libBDX
 
 		// TODO("Change this to a single call to AES");
 		// compute the bucket wide output values
-		mOutputLabelSeed = prng.get_block();
+		mOutputLabelSeed = prng.get<block>();
 		//PRNG outputGen(mOutputLabelSeed);
 		mCommonOutput.resize(cir.Outputs().size());
 		//for (auto& wire : mCommonOutput)
 		//{
-		//	wire[0] = outputGen.get_block();
-		//	wire[1] = outputGen.get_block();
+		//	wire[0] = outputGen.get<block>();
+		//	wire[1] = outputGen.get<block>();
 		//}
-		AES128::Key outGen;
-		AES128::EncKeyGen(mOutputLabelSeed, outGen);
-		AES128::EcbEncBlocks(outGen, indexArray.data(), (block*)mCommonOutput.data(), mCommonOutput.size() * 2);
+		AES outGen(mOutputLabelSeed);
+		outGen.ecbEncBlocks(indexArray.data(),  mCommonOutput.size() * 2, (block*)mCommonOutput.data());
 
 		// for each circuit, compute the output translation values that allows
 		//   the evaluator to get to a common bucket wire set of output labels
@@ -138,7 +137,7 @@ namespace libBDX
 		for (u64 b = 0; b < bucketSize; ++b)
 		{
 
-			//Lg::out << "P" << (int)role << " " << mMyCircuits[b]->mIdx << Lg::endl;
+			//std::cout << "P" << (int)role << " " << mMyCircuits[b]->mIdx << std::endl;
 
 			mMyCircuits[b]->mOTInitDoneFutr.get();
 
@@ -159,7 +158,8 @@ namespace libBDX
 				translationValues[0] = _mm_slli_epi64(mMyCircuits[b]->mCircuit.mOutputWires[i], 1) ^ tweaks[0];
 				translationValues[1] = _mm_slli_epi64(mMyCircuits[b]->mCircuit.mOutputWires[i] ^ (xorOffset), 1) ^ tweaks[1];
 
-				AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, translationValues, enc);
+                mAesFixedKey.ecbEncTwoBlocks(translationValues, enc);
+				//AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, );
 
 				translationValues[0] = translationValues[0] ^ enc[0]; // H( a0 )
 				translationValues[1] = translationValues[1] ^ enc[1]; // H( a1 )
@@ -175,8 +175,8 @@ namespace libBDX
 				translationValues[0] = translationValues[0] ^ mCommonOutput[i][0];
 				translationValues[1] = translationValues[1] ^ mCommonOutput[i][1];
 
-				//Lg::out << "co[" << i << "][0] " << b0 << " = O " << mCommonOutput[i][0] << " + T " << translationValues[0] << Lg::endl;
-				//Lg::out << "co[" << i << "][1] " << b1 << " = O " << mCommonOutput[i][1] << " + T " << translationValues[1] << Lg::endl;
+				//std::cout << "co[" << i << "][0] " << b0 << " = O " << mCommonOutput[i][0] << " + T " << translationValues[0] << std::endl;
+				//std::cout << "co[" << i << "][1] " << b1 << " = O " << mCommonOutput[i][1] << " + T " << translationValues[1] << std::endl;
 
 			}
 			chl.asyncSend(std::move(buff));
@@ -202,6 +202,8 @@ namespace libBDX
 		u64 start[2] = { 0 , cir.Inputs()[0] };
 
 		std::unique_ptr<ByteStream> buff(new ByteStream(sizeof(block) * 2 * theirKProbe.encodingSize()));
+        ArrayIterator<block> buffIter = buff->getArrayView<block>().begin();
+
 		std::array<const block*, 2> OTMsgs = { { &mTheirCircuits[0]->OTSendMsg(0, 0), &mTheirCircuits[0]->OTSendMsg(0, 1) } };
 
 		block xorOffset = mMyCircuits[0]->mCircuit.mGlobalOffset;
@@ -215,20 +217,19 @@ namespace libBDX
 
 		for (u64 t = 0; t < theirKProbe.encodingSize(); ++t)
 		{
-			//Lg::out << "P" << (int)(1 ^ role) << "'s En kprobe i[0][" << t << "] " << (encodedZeroLabels[t]) << "  " << (encodedZeroLabels[t] ^ xorOffset) << Lg::endl;
-
-			buff->append(OTMsgs[0][t] ^ mMyCircuits[0]->mKProbeInputs[t]);
-			buff->append(OTMsgs[1][t] ^ mMyCircuits[0]->mKProbeInputs[t] ^ xorOffset);
+			//std::cout << "P" << (int)(1 ^ role) << "'s En kprobe i[0][" << t << "] " << (encodedZeroLabels[t]) << "  " << (encodedZeroLabels[t] ^ xorOffset) << std::endl;
+            *buffIter++ = (OTMsgs[0][t] ^ mMyCircuits[0]->mKProbeInputs[t]);
+            *buffIter++ = (OTMsgs[1][t] ^ mMyCircuits[0]->mKProbeInputs[t] ^ xorOffset);
 		}
 		mMyCircuits[0]->mKProbeInputs.clear();
 
-		//Lg::out << Lg::endl;
+		//std::cout << std::endl;
 		chl.asyncSend(std::move(buff));
 		//
 		   //for (u64 t = 0; t < cir.Inputs()[1 ^ role]; ++t)
 		   //{
 
-		   //	Lg::out << "P" << (int)(1 ^ role) << "'s decoded kprobe  i[" << 0 << "][" << t << "] " << (mTheirInputOffsets[0][t]) << "  " << (mTheirInputOffsets[0][t] ^ xorOffset) << Lg::endl;
+		   //	std::cout << "P" << (int)(1 ^ role) << "'s decoded kprobe  i[" << 0 << "][" << t << "] " << (mTheirInputOffsets[0][t]) << "  " << (mTheirInputOffsets[0][t] ^ xorOffset) << std::endl;
 
 		   //}
 	   //}
@@ -237,6 +238,8 @@ namespace libBDX
 		{
 
 			buff.reset(new ByteStream(sizeof(block) * 2 * theirKProbe.encodingSize()));
+            buffIter = buff->getArrayView<block>().begin();
+
 			OTMsgs[0] = &mTheirCircuits[b]->OTSendMsg(0, 0);
 			OTMsgs[1] = &mTheirCircuits[b]->OTSendMsg(0, 1);
 
@@ -250,14 +253,14 @@ namespace libBDX
 			{
 				//u8 bit = mTheirDeltas[i][t];
 
-				//Lg::out << "P" << (int)(1 ^ role) << "'s En kprobe i["<< b <<"][" << t << "] " << (encodedZeroLabels[t]) << "  " << (encodedZeroLabels[t] ^ xorOffset) << Lg::endl;
+				//std::cout << "P" << (int)(1 ^ role) << "'s En kprobe i["<< b <<"][" << t << "] " << (encodedZeroLabels[t]) << "  " << (encodedZeroLabels[t] ^ xorOffset) << std::endl;
 
 
-				buff->append(OTMsgs[0][t] ^ mMyCircuits[b]->mKProbeInputs[t]);
-				buff->append(OTMsgs[1][t] ^ mMyCircuits[b]->mKProbeInputs[t] ^ xorOffset);
+				*buffIter ++ =(OTMsgs[0][t] ^ mMyCircuits[b]->mKProbeInputs[t]);
+				*buffIter ++ =(OTMsgs[1][t] ^ mMyCircuits[b]->mKProbeInputs[t] ^ xorOffset);
 			}
 			mMyCircuits[b]->mKProbeInputs.clear();
-			//Lg::out << Lg::endl;
+			//std::cout << std::endl;
 
 			chl.asyncSend(std::move(buff));
 
@@ -266,7 +269,7 @@ namespace libBDX
 			//	for (u64 t = 0; t < cir.Inputs()[1 ^ role]; ++t)
 			//	{
 
-			//		Lg::out << "P" << (int)(1 ^ role) << "'s decoded kprobe  i[" << b << "][" << t << "] " << (mTheirInputOffsets[b][t]) << "  " << (mTheirInputOffsets[b][t] ^ xorOffset) << Lg::endl;
+			//		std::cout << "P" << (int)(1 ^ role) << "'s decoded kprobe  i[" << b << "][" << t << "] " << (mTheirInputOffsets[b][t]) << "  " << (mTheirInputOffsets[b][t] ^ xorOffset) << std::endl;
 
 			//	}
 			//}
@@ -299,9 +302,9 @@ namespace libBDX
 				labels[t] = maskedLabels[2 * t + c] ^ mMyCircuits[i]->OTRecvMsg(t);
 
 				if (Commit(labels[t]) != mTheirCircuits[i]->mMyKProbeInputCommit[t][c])
-					throw invalid_commitment();
+					throw std::runtime_error(LOCATION);
 
-				//Lg::out << "P" << (int)(role) << "'s En kprobe r[" << i << "][" << t << "] " << labels[t] << "  "  << (u32)c << Lg::endl;
+				//std::cout << "P" << (int)(role) << "'s En kprobe r[" << i << "][" << t << "] " << labels[t] << "  "  << (u32)c << std::endl;
 
 			}
 			mMyDecodedKProbeLabels[i].resize(cir.Inputs()[role]);
@@ -317,7 +320,7 @@ namespace libBDX
 			//for (u64 j = 0; j < mMyDecodedKProbeLabels[i].size(); ++j)
 			//{
 
-			//	Lg::out << "P" << (int)role << "'s kprobeLabels [" << i << "][" << j << "]  " << (int)myPermutes[j] << "  " << mMyDecodedKProbeLabels[i][j] << Lg::endl;
+			//	std::cout << "P" << (int)role << "'s kprobeLabels [" << i << "][" << j << "]  " << (int)myPermutes[j] << "  " << mMyDecodedKProbeLabels[i][j] << std::endl;
 
 			//}
 		}
@@ -342,7 +345,7 @@ namespace libBDX
 		//{
 
 
-			//Lg::out << "P" << (int)role << " i.cor r " << *mInputCorrectionString << "+ i " << input << "= c ";
+			//std::cout << "P" << (int)role << " i.cor r " << *mInputCorrectionString << "+ i " << input << "= c ";
 
 		*mInputCorrectionString ^= input;
 
@@ -350,12 +353,12 @@ namespace libBDX
 		chl.asyncSend(std::move(mInputCorrectionString));
 
 		//}
-		//Lg::out << "P" << (int)role << " sent input correction" << Lg::endl;
+		//std::cout << "P" << (int)role << " sent input correction" << std::endl;
 
 
 		mTheirInputCorrectionFuture.get();
 
-		//Lg::out << "P" << (int)role << " received input correction" << Lg::endl;
+		//std::cout << "P" << (int)role << " received input correction" << std::endl;
 
 		for (u64 j = 0; j < mTheirCircuits.size(); ++j) mTheirInputLabelsFuture[j].get();
 
@@ -365,22 +368,22 @@ namespace libBDX
 			Commit comm(labels[0][wireIdx]);
 
 
-			//Lg::out << "P" << (int)(1 ^ role) << " il chck [0][" << i << "] " << labels[0][wireIdx] << Lg::endl;
+			//std::cout << "P" << (int)(1 ^ role) << " il chck [0][" << i << "] " << labels[0][wireIdx] << std::endl;
 
 			// this is the xor of their actual i'th input bit and the i'th bit of
 			// what their random ot choice bits decode to.
 			u8 phi = mTheirInputCorrection[i];
 			if (comm != mTheirCircuits[0]->mTheirInputCommits[i][phi])
 			{
-				Lg::out << "input sender's input commit failed at cirIdx 0 (" << mTheirCircuits[0]->mIdx << ") input idx " << i << ". Their permute bit " << (int)(phi) << Lg::endl;
+				std::cout << "input sender's input commit failed at cirIdx 0 (" << mTheirCircuits[0]->mIdx << ") input idx " << i << ". Their permute bit " << (int)(phi) << std::endl;
 
-				Lg::out << "their input correction " << mTheirInputCorrection << Lg::endl;
+				std::cout << "their input correction " << mTheirInputCorrection << std::endl;
 
-				Lg::out << "L[0][" << wireIdx << "] " << labels[0][wireIdx] << "  ( " << comm << " != " << mTheirCircuits[0]->mTheirInputCommits[i][phi] << Lg::endl;
+				std::cout << "L[0][" << wireIdx << "] " << labels[0][wireIdx] << "  ( " << comm << " != " << mTheirCircuits[0]->mTheirInputCommits[i][phi] << std::endl;
 
 
 
-				throw invalid_commitment();
+				throw std::runtime_error(LOCATION);
 			}
 			// the rest of the inputs should decommit according to the permute order
 			// specified their k-probe matrix * delta = permuteTranspose.
@@ -391,14 +394,14 @@ namespace libBDX
 				u8 delta = mTheirPermutes[j - 1][i];
 				if (commi != mTheirCircuits[j]->mTheirInputCommits[i][delta ^ phi])
 				{
-					Lg::out << "input sender's input commit failed at cirIdx " << j << " (" << mTheirCircuits[j]->mIdx << ") input idx " << i << ". Their permute bit " << (int)(delta ^ phi) << " = " << (int)delta << " ^ " << (int)phi << Lg::endl;
+					std::cout << "input sender's input commit failed at cirIdx " << j << " (" << mTheirCircuits[j]->mIdx << ") input idx " << i << ". Their permute bit " << (int)(delta ^ phi) << " = " << (int)delta << " ^ " << (int)phi << std::endl;
 
-					Lg::out << "their input correction " << mTheirInputCorrection << Lg::endl
-						<< "their delta[i]         " << mTheirPermutes[j - 1] << Lg::endl;
+					std::cout << "their input correction " << mTheirInputCorrection << std::endl
+						<< "their delta[i]         " << mTheirPermutes[j - 1] << std::endl;
 
-					Lg::out << "L[" << j << "][" << wireIdx << "] " << labels[j][wireIdx] << "  ( " << commi << " != " << mTheirCircuits[j]->mTheirInputCommits[i][delta ^ phi] << Lg::endl;
+					std::cout << "L[" << j << "][" << wireIdx << "] " << labels[j][wireIdx] << "  ( " << commi << " != " << mTheirCircuits[j]->mTheirInputCommits[i][delta ^ phi] << std::endl;
 
-					throw invalid_commitment();
+					throw std::runtime_error(LOCATION);
 				}
 			}
 		}
@@ -456,15 +459,14 @@ namespace libBDX
 
 #ifdef ADAPTIVE_SECURE 
 
-		//Lg::out << "waiting for adapt seed @" << b  << " from P" << (int)(1 - role) << "  on channel " << chl.Name() << Lg::endl;
+		//std::cout << "waiting for adapt seed @" << b  << " from P" << (int)(1 - role) << "  on channel " << chl.Name() << std::endl;
 
 		chl.recv(&adaptiveSecureSeed, sizeof(block));
 
 		timer.setTimePoint("AdaptiveSeedReceived");
-		//Lg::out << "got for adapt seed for cir" << mTheirCircuits[b]->mIdx << " from P" << (int)(1 - role) << "  on channel " << chl.Name() << Lg::endl;
-		AES128::Key adaptiveSecureMaskKey;
-		AES128::EncKeyGen(adaptiveSecureSeed, adaptiveSecureMaskKey);
-		AES128::EcbEncBlocks(adaptiveSecureMaskKey, indexArray.data(), adaptiveSecureTableMasks.data(), adaptiveSecureTableMasks.size());
+		//std::cout << "got for adapt seed for cir" << mTheirCircuits[b]->mIdx << " from P" << (int)(1 - role) << "  on channel " << chl.Name() << std::endl;
+		AES adaptiveSecureMaskKey(adaptiveSecureSeed);
+		adaptiveSecureMaskKey.ecbEncBlocks( indexArray.data(), adaptiveSecureTableMasks.size(), adaptiveSecureTableMasks.data());
 		timer.setTimePoint("AdativeSecureMaskGen");
 
 #endif
@@ -477,7 +479,7 @@ namespace libBDX
 		//{
 		//	for (u64 i = 0; i < cir.Inputs()[1 ^ role]; ++i)
 		//	{
-		//		Lg::out << "recv P" << (int)(1 ^ role) << "'s thr lb[" << b << "][" << i << "] " << *label++ << Lg::endl;
+		//		std::cout << "recv P" << (int)(1 ^ role) << "'s thr lb[" << b << "][" << i << "] " << *label++ << std::endl;
 		//	}
 		//}
 
@@ -495,7 +497,7 @@ namespace libBDX
 		{
 			//block blk = mMyDecodedKProbeLabels[b][i] ^ labels[idx];
 
-			//Lg::out << "recv P" << (int)(role) << "'s own lb[" << b << "][" << i << "] " << blk << "  = " << mMyDecodedKProbeLabels[b][i] << "  +  " << labels[idx] << Lg::endl;
+			//std::cout << "recv P" << (int)(role) << "'s own lb[" << b << "][" << i << "] " << blk << "  = " << mMyDecodedKProbeLabels[b][i] << "  +  " << labels[idx] << std::endl;
 
 			labels[idx] = mMyDecodedKProbeLabels[b][i] ^ labels[idx];
 		}
@@ -508,7 +510,7 @@ namespace libBDX
 
 		for (u64 i = 0, idx = start[1 ^ role]; i < cir.Inputs()[1 ^ role]; ++i, ++idx)
 		{
-			if (notEqual(labels[idx], debug_zeroWireLabels[idx] ^ correction[theirInput[i]]))
+			if (neq(labels[idx], debug_zeroWireLabels[idx] ^ correction[theirInput[i]]))
 				throw std::runtime_error("");
 		}
 
@@ -516,14 +518,14 @@ namespace libBDX
 
 		for (u64 i = 0, idx = start[role]; i < mMyDecodedKProbeLabels[b].size(); ++i, ++idx)
 		{
-			if (notEqual(labels[idx], debug_zeroWireLabels[idx] ^ correction[myInput[i]]))
+			if (neq(labels[idx], debug_zeroWireLabels[idx] ^ correction[myInput[i]]))
 				throw std::runtime_error("");
 		}
 #endif
 
 
 
-		//Lg::out << "evaluating cir" << mTheirCircuits[b]->mIdx << " from P" << (int)(1 - role) << Lg::endl;
+		//std::cout << "evaluating cir" << mTheirCircuits[b]->mIdx << " from P" << (int)(1 - role) << std::endl;
 
 #ifdef ADAPTIVE_SECURE 
 		mTheirCircuits[b]->mCircuit.evaluate(cir, labels, adaptiveSecureTableMasks);
@@ -547,7 +549,7 @@ namespace libBDX
 			hash[0] = _mm_slli_epi64(labels[cir.Outputs()[i]], 1) ^ tweaks[0];
 			hash[1] = _mm_slli_epi64(labels[cir.Outputs()[i]], 1) ^ tweaks[1];
 
-			AES128::EcbEncTwoBlocks(HalfGtGarbledCircuit::mAesFixedKey, hash, enc);
+            mAesFixedKey.ecbEncTwoBlocks(hash, enc);
 
 			hash[0] = hash[0] ^ enc[0]; // H( a0 )
 			hash[1] = hash[1] ^ enc[1]; // H( a1 )
@@ -568,7 +570,7 @@ namespace libBDX
 #endif
 			// xor into the psi value the evaluated label xor the translation and our corresponding common output wire value.
 			block common = theirCommonOutput ^ mCommonOutput[i][bit];
-			//Lg::out << "O[" << (int)role << "][" << b << "][" << i << "] = " << common << " = " << theirCommonOutput << " + " << mCommonOutput[i][bit] << "  " << (int)bit << Lg::endl;
+			//std::cout << "O[" << (int)role << "][" << b << "][" << i << "] = " << common << " = " << theirCommonOutput << " + " << mCommonOutput[i][bit] << "  " << (int)bit << std::endl;
 
 			psiInput = psiInput ^ common;
 
@@ -582,10 +584,10 @@ namespace libBDX
 
 
 
-		//Lg::out << "psi[" << (int)role << "][" << b << "] " << psiInput << " " << mOutputs[b] << Lg::endl;
+		//std::cout << "psi[" << (int)role << "][" << b << "] " << psiInput << " " << mOutputs[b] << std::endl;
 		//mPsiInputPromise[b].set_value(psiInput);
 
-		//Lg::out << "psi input for cir " << mTheirCircuits[b]->mIdx << " from P" << (int)(1 - role) << Lg::endl;
+		//std::cout << "psi input for cir " << mTheirCircuits[b]->mIdx << " from P" << (int)(1 - role) << std::endl;
 
 		}
 
@@ -635,7 +637,7 @@ namespace libBDX
 #endif
 
 #ifdef ADAPTIVE_SECURE
-			//Lg::out << "sending adapt seed for cir" << mMyCircuits[cirIdx]->mIdx << " to P" << (int)(1 - role) << "  on channel " << chl.Name() << Lg::endl;
+			//std::cout << "sending adapt seed for cir" << mMyCircuits[cirIdx]->mIdx << " to P" << (int)(1 - role) << "  on channel " << chl.Name() << std::endl;
 
 			chl.asyncSend(&mMyCircuits[cirIdx]->mAdaptiveSecureMaskSeed, sizeof(block));
 #endif
@@ -655,7 +657,7 @@ namespace libBDX
 				// use myLabels as storage for the corrected labels and just send. saves a data read.
 				*inputLabels = *myLabels ^ corrects[input[i]];
 
-				//Lg::out << "sending P" << (int)role << " my il[" << i << "] " << *inputLabels << Lg::endl;
+				//std::cout << "sending P" << (int)role << " my il[" << i << "] " << *inputLabels << std::endl;
 			}
 			//chl.asyncSend(myLabels, cir.Inputs()[role] * sizeof(block));
 			chl.asyncSend(std::move(buff));
@@ -692,7 +694,7 @@ namespace libBDX
 					*inputLabels = *theirKProbeLabels ^ *circuitLabels  ^ corrects[mTheirInputCorrection[t]];
 				}
 
-				//Lg::out << "sending P" << (int)(1 ^ role) << " their il[" << t << "] " << *theirKProbeLabels << "  " << (*theirKProbeLabels ^ corrects[1]) << "  -> " << *circuitLabels << " " << (*circuitLabels ^ corrects[1]) << "   (" << *inputLabels << ")" << Lg::endl;
+				//std::cout << "sending P" << (int)(1 ^ role) << " their il[" << t << "] " << *theirKProbeLabels << "  " << (*theirKProbeLabels ^ corrects[1]) << "  -> " << *circuitLabels << " " << (*circuitLabels ^ corrects[1]) << "   (" << *inputLabels << ")" << std::endl;
 
 			}
 
@@ -755,7 +757,7 @@ namespace libBDX
 		}
 
 		if (Commit((u8*)wireBuff.data(), cir.OutputCount() * 2 * sizeof(block)) != mTheirCircuits[cirIdx]->mOutputCommit)
-			throw invalid_commitment();
+			throw std::runtime_error(LOCATION);
 
 		u64 rem = --mTransCheckRemaining;
 

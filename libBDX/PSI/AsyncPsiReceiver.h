@@ -1,18 +1,17 @@
 #pragma once
-#include "Common/Defines.h"
-#include "Network/Channel.h"
-#include "Common/BitVector.h"
-#include "Common/Timer.h"
-#include "Crypto/PRNG.h"
-#include "Crypto/Commit.h"
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Common/Timer.h"
+#include "cryptoTools/Crypto/PRNG.h"
+#include "cryptoTools/Crypto/Commit.h"
 #include "OT/OTExtReceiver.h"
-#include "OT/OTExtSender.h"
 #include <vector>
 #include <array>
-#include "Common/ArrayView.h"
+#include "cryptoTools/Common/ArrayView.h"
 //#define ASYNC_PSI
 
-namespace libBDX
+namespace osuCrypto
 {
 
 
@@ -35,10 +34,10 @@ namespace libBDX
 		std::vector<BitVector> mTheirPermute;
 
 
-		I_OTExtReceiver* motRecv;
+        BDX_OTExtReceiver* motRecv;
 		u64 mOTIdx;
 
-		void init(u64 inputSize, u64 wordSize, Channel& chl, I_OTExtReceiver& otRecv, u64& otIdx);
+		void init(u64 inputSize, u64 wordSize, Channel& chl, BDX_OTExtReceiver& otRecv, u64& otIdx);
 
 		void CommitSend(const block& inputs, Channel& chl, u64 idx);
 		void CommitRecv(Channel& chl, u64 idx);

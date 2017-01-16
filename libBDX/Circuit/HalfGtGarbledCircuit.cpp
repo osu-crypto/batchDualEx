@@ -1,21 +1,11 @@
 #include "HalfGtGarbledCircuit.h"
-#include "cryptopp/randpool.h"
-#include "Network/Channel.h"
-#include "Common/ByteStream.h"
-#include "Common/Logger.h"
-#include "cryptopp/sha.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Common/ByteStream.h"
+#include "cryptoTools/Common/Log.h"
 #include <cassert>
 
-namespace libBDX 
+namespace osuCrypto 
 {
-
-	const AES128::Key HalfGtGarbledCircuit::mAesFixedKey = []()
-	{
-		AES128::Key key;
-		block fixedKey = _mm_set_epi8(36, -100, 50, -22, 92, -26, 49, 9, -82, -86, -51, -96, 98, -20, 29, -13);
-		AES128::EncKeyGen(fixedKey, key);
-		return key;
-	}();
 
 
 	HalfGtGarbledCircuit::HalfGtGarbledCircuit(HalfGtGarbledCircuit&& src)
@@ -53,17 +43,16 @@ namespace libBDX
 		mOutputWires.clear();
 		//mGates.clear();
 
-		AES128::Key aesSeedKey;
-		AES128::EncKeyGen(seed, aesSeedKey);
+		AES aesSeedKey(seed);
 
 		//create the delta for the free Xor. Encrypt zero twice. We get a good enough random delta by encrypting twice
-		AES128::EcbEncBlock(aesSeedKey, ZeroBlock, mGlobalOffset);
-		AES128::EcbEncBlock(aesSeedKey, mGlobalOffset, mGlobalOffset);
+		aesSeedKey.ecbEncBlock(ZeroBlock, mGlobalOffset);
+		aesSeedKey.ecbEncBlock(mGlobalOffset, mGlobalOffset);
 		ByteArray(mGlobalOffset)[0] |= 1; // make sure the bottom bit is a 1 for point-n-permute
 
 		// Compute the input labels as AES permutations on mIndexArray
 		mInputWires.resize(cd.InputWireCount());
-		AES128::EcbEncBlocks(aesSeedKey,indexArray.data(), (block*)mInputWires.data(), mInputWires.size());
+		aesSeedKey.ecbEncBlocks(indexArray.data(), mInputWires.size(), (block*)mInputWires.data());
 		std::copy(mInputWires.begin(), mInputWires.end(), wires.begin());
 
 		block temp[4], hash[4], tweaks[2]{ ZeroBlock, _mm_set_epi64x(0, cd.Gates().size()) };
@@ -74,7 +63,7 @@ namespace libBDX
 		std::array<block, 2> zeroAndGlobalOffset{ { ZeroBlock, mGlobalOffset } };
 
 
-		//Lg::out << "cir size " << buff->size() << Lg::endl;
+		//std::cout << "cir size " << buff->size() << std::endl;
 		auto gateIter = reinterpret_cast<GarbledGate<2>*>(buff->data());
 #ifdef ADAPTIVE_SECURE 
 		auto maskIter = tableMasks.begin();
@@ -114,7 +103,7 @@ namespace libBDX
 				hash[1] = _mm_slli_epi64((a ^ mGlobalOffset), 1) ^ tweaks[0];
 				hash[2] = _mm_slli_epi64(b, 1) ^ tweaks[1];
 				hash[3] = _mm_slli_epi64((b ^ mGlobalOffset), 1) ^ tweaks[1];
-				AES128::EcbEncFourBlocks(mAesFixedKey, hash, temp);
+			    mAesFixedKey.ecbEncFourBlocks(hash, temp);
 				hash[0] = hash[0] ^ temp[0]; // H( a0 )
 				hash[1] = hash[1] ^ temp[1]; // H( a1 )
 				hash[2] = hash[2] ^ temp[2]; // H( b0 )
@@ -183,17 +172,16 @@ namespace libBDX
 		mOutputWires.clear();
 		mGates.clear();
 
-		AES128::Key aesSeedKey;
-		AES128::EncKeyGen(seed, aesSeedKey);
+		AES aesSeedKey(seed);
 
 		//create the delta for the free Xor. Encrypt zero twice. We get a good enough random delta by encrypting twice
-		AES128::EcbEncBlock(aesSeedKey, ZeroBlock, mGlobalOffset);
-		AES128::EcbEncBlock(aesSeedKey, mGlobalOffset, mGlobalOffset);
+		aesSeedKey.ecbEncBlock(ZeroBlock, mGlobalOffset);
+		aesSeedKey.ecbEncBlock(mGlobalOffset, mGlobalOffset);
 		ByteArray(mGlobalOffset)[0] |= 1; // make sure the bottom bit is a 1 for point-n-permute
 
 		// Compute the input labels as AES permutations on mIndexArray
 		mInputWires.resize(cd.InputWireCount());
-		AES128::EcbEncBlocks(aesSeedKey, indexArray.data(), (block*)mInputWires.data(), mInputWires.size());
+		aesSeedKey.ecbEncBlocks(indexArray.data(), mInputWires.size(), (block*)mInputWires.data());
 
 		block temp[4], hash[4], tweaks[2]{ ZeroBlock, _mm_set_epi64x(0, cd.Gates().size()) };
 		u8 aPermuteBit, bPermuteBit;
@@ -238,7 +226,7 @@ namespace libBDX
 				hash[1] = _mm_slli_epi64((a ^ mGlobalOffset), 1) ^ tweaks[0];
 				hash[2] = _mm_slli_epi64(b, 1) ^ tweaks[1];
 				hash[3] = _mm_slli_epi64((b ^ mGlobalOffset), 1) ^ tweaks[1];
-				AES128::EcbEncFourBlocks(mAesFixedKey, hash, temp);
+                mAesFixedKey.ecbEncFourBlocks( hash, temp);
 				hash[0] = hash[0] ^ temp[0]; // H( a0 )
 				hash[1] = hash[1] ^ temp[1]; // H( a1 )
 				hash[2] = hash[2] ^ temp[2]; // H( b0 )
@@ -330,7 +318,7 @@ namespace libBDX
 				// compute the hashs
 				hashs[0] = _mm_slli_epi64(a, 1) ^ tweaks[0];
 				hashs[1] = _mm_slli_epi64(b, 1) ^ tweaks[1];
-				AES128::EcbEncTwoBlocks(mAesFixedKey, hashs, temp);
+                mAesFixedKey.ecbEncTwoBlocks(hashs, temp);
 				hashs[0] = temp[0] ^ hashs[0]; // a
 				hashs[1] = temp[1] ^ hashs[1]; // b
 
@@ -368,21 +356,20 @@ namespace libBDX
 	{
 
 		
-		AES128::Key aesSeedKey;
-		AES128::EncKeyGen(seed, aesSeedKey);
+		AES aesSeedKey(seed);
 
 		mInputWires.clear();
 		mInputWires.reserve(cd.WireCount());
 
 
 		//create the delta for the free Xor. Encrypt zero twice. We get a good enough random delta by encrypting twice
-		AES128::EcbEncBlock(aesSeedKey, ZeroBlock, mGlobalOffset);
-		AES128::EcbEncBlock(aesSeedKey, mGlobalOffset, mGlobalOffset);
+        aesSeedKey.ecbEncBlock(ZeroBlock, mGlobalOffset);
+        aesSeedKey.ecbEncBlock(mGlobalOffset, mGlobalOffset);
 		ByteArray(mGlobalOffset)[0] |= 1; // make sure the bottom bit is a 1 for point-n-permute
 
 		// Compute the input labels as AES permutations on mIndexArray
 		mInputWires.resize(cd.InputWireCount());
-		AES128::EcbEncBlocks(aesSeedKey, indexArray.data(), (block*)mInputWires.data(), mInputWires.size());
+        aesSeedKey.ecbEncBlocks(indexArray.data(), mInputWires.size(), (block*)mInputWires.data());
 
 		block temp[4], hash[4], tweaks[2]{ ZeroBlock, _mm_set_epi64x(0, cd.Gates().size()) };
 		u8 aPermuteBit, bPermuteBit;
@@ -430,7 +417,7 @@ namespace libBDX
 				hash[1] = _mm_slli_epi64((a ^ mGlobalOffset), 1) ^ tweaks[0];
 				hash[2] = _mm_slli_epi64(b, 1) ^ tweaks[1];
 				hash[3] = _mm_slli_epi64((b ^ mGlobalOffset), 1) ^ tweaks[1];
-				AES128::EcbEncFourBlocks(mAesFixedKey, hash, temp);
+                mAesFixedKey.ecbEncFourBlocks(hash, temp);
 				hash[0] = hash[0] ^ temp[0]; // H( a0 )
 				hash[1] = hash[1] ^ temp[1]; // H( a1 )
 				hash[2] = hash[2] ^ temp[2]; // H( b0 )
@@ -454,9 +441,9 @@ namespace libBDX
 				garbledTable[1] = garbledTable[1] ^ *maskIter++;
 #endif
 
-				if (notEqual(garbledTable[0], gateIter->mGarbledTable[0]))
+				if (neq(garbledTable[0], gateIter->mGarbledTable[0]))
 					throw std::runtime_error("GC check failed");
-				if (notEqual(garbledTable[1], gateIter->mGarbledTable[1]))
+				if (neq(garbledTable[1], gateIter->mGarbledTable[1]))
 					throw std::runtime_error("GC check failed");
 
 				++gateIter;
@@ -506,13 +493,13 @@ namespace libBDX
 
 	void HalfGtGarbledCircuit::SendToEvaluator(Channel & channel)
 	{
-		auto buff = std::unique_ptr<ByteStream>(new ByteStream());
+		auto buff = std::unique_ptr<ByteStream>(new ByteStream((u8*)mGates.data(), mGates.size() * sizeof(GarbledGate<2>)));
 
-		for (u64 i = 0; i < mGates.size(); ++i)
-		{
-			buff->append(ByteArray(mGates[i].mGarbledTable[0]), sizeof(block));
-			buff->append(ByteArray(mGates[i].mGarbledTable[1]), sizeof(block));
-		}
+		//for (u64 i = 0; i < mGates.size(); ++i)
+		//{
+		//	buff->append(ByteArray(mGates[i].mGarbledTable[0]), sizeof(block));
+		//	buff->append(ByteArray(mGates[i].mGarbledTable[1]), sizeof(block));
+		//}
 
 		channel.asyncSend(std::move(buff));
 		

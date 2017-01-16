@@ -3,14 +3,14 @@
 #include <vector>
 #include <memory>
 
-#include "Common/Defines.h"
-#include "Network/BtIOService.h"
+#include "cryptoTools/Common/Defines.h"
+#include "cryptoTools/Network/BtIOService.h"
 
-#include "Network/BtEndpoint.h"
-#include "Network/Channel.h"
+#include "cryptoTools/Network/BtEndpoint.h"
+#include "cryptoTools/Network/Channel.h"
 
-#include "Common/ByteStream.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Common/ByteStream.h"
+#include "cryptoTools/Common/Log.h"
 
 
 #include "BtChannel_Tests.h"
@@ -18,12 +18,12 @@
 #include "Common.h"
 
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 void BtNetwork_Connect1_Boost_Test()
 {
 
-	Lg::setThreadName("Test_Host");
+	setThreadName("Test_Host");
 
 	std::string channelName{ "TestChannel" };
 	std::string msg{ "This is the message" };
@@ -32,14 +32,14 @@ void BtNetwork_Connect1_Boost_Test()
 	BtIOService ioService(0);
 	auto thrd = std::thread([&]()
 	{
-		Lg::setThreadName("Test_Client");
+		setThreadName("Test_Client");
 
-		//Lg::out << "client ep start" << Lg::endl;
+		//std::cout << "client ep start" << std::endl;
 		BtEndpoint endpoint(ioService, "127.0.0.1", 1212, false, "endpoint");
-		//Lg::out << "client ep done" << Lg::endl;
+		//std::cout << "client ep done" << std::endl;
 
 		Channel& chl = endpoint.addChannel(channelName, channelName);
-		//Lg::out << "client chl done" << Lg::endl;
+		//std::cout << "client chl done" << std::endl;
 
 
 		std::unique_ptr<ByteStream> srvRecv(new ByteStream());
@@ -56,30 +56,30 @@ void BtNetwork_Connect1_Boost_Test()
 
 		chl.asyncSend(std::move(srvRecv));
 
-		//Lg::out << " server closing" << Lg::endl;
+		//std::cout << " server closing" << std::endl;
 
 		chl.close();
 
-		//Lg::out << " server nm closing" << Lg::endl;
+		//std::cout << " server nm closing" << std::endl;
 
 		//netServer.CloseChannel(chl.Name());
 		endpoint.stop();
-		//Lg::out << " server closed" << Lg::endl;
+		//std::cout << " server closed" << std::endl;
 
 	});
 
 	//BtIOService ioService;
 
-	//Lg::out << "host ep start" << Lg::endl;
+	//std::cout << "host ep start" << std::endl;
 
 	BtEndpoint endpoint(ioService, "127.0.0.1", 1212, true, "endpoint");
 
-	//Lg::out << "host ep done" << Lg::endl;
+	//std::cout << "host ep done" << std::endl;
 
 	auto& chl = endpoint.addChannel(channelName, channelName);
-	//Lg::out << "host chl done" << Lg::endl;
+	//std::cout << "host chl done" << std::endl;
 
-	//Lg::out << " client channel added" << Lg::endl;
+	//std::cout << " client channel added" << std::endl;
 
 	chl.asyncSend(msgBuff.data(), msgBuff.size());
 
@@ -88,13 +88,13 @@ void BtNetwork_Connect1_Boost_Test()
 
 	if (clientRecv != msgBuff)
 		throw UnitTestFail();
-	//Lg::out << " client closing" << Lg::endl;
+	//std::cout << " client closing" << std::endl;
 
 
 	chl.close();
 	//netClient.CloseChannel(channelName);
 	endpoint.stop();
-	//Lg::out << " client closed" << Lg::endl;
+	//std::cout << " client closed" << std::endl;
 
 
 	thrd.join();
@@ -108,7 +108,7 @@ void BtNetwork_OneMegabyteSend_Boost_Test()
 {
 	//InitDebugPrinting();
 
-	Lg::setThreadName("Test_Host");
+	setThreadName("Test_Host");
 
 	std::string channelName{ "TestChannel" };
 	std::string msg{ "This is the message" };
@@ -122,7 +122,7 @@ void BtNetwork_OneMegabyteSend_Boost_Test()
 
 	auto thrd = std::thread([&]()
 	{
-		Lg::setThreadName("Test_Client");
+		setThreadName("Test_Client");
 
 		BtEndpoint endpoint(ioService, "127.0.0.1", 1212, false, "endpoint");
 		Channel& chl = endpoint.addChannel(channelName, channelName);
@@ -164,7 +164,7 @@ void BtNetwork_OneMegabyteSend_Boost_Test()
 void BtNetwork_ConnectMany_Boost_Test()
 {
 	//InitDebugPrinting();
-	Lg::setThreadName("Test_Host");
+	setThreadName("Test_Host");
 
 	std::string channelName{ "TestChannel" };
 
@@ -184,7 +184,7 @@ void BtNetwork_ConnectMany_Boost_Test()
 	std::thread serverThrd = std::thread([&]()
 	{
 		BtIOService ioService(1);
-		Lg::setThreadName("Test_client");
+		setThreadName("Test_client");
 
 		BtEndpoint endpoint(ioService, "127.0.0.1", 1212, false, "endpoint");
 
@@ -194,7 +194,7 @@ void BtNetwork_ConnectMany_Boost_Test()
 		{
 			threads.emplace_back([i, &buff, &endpoint, messageCount, print, channelName]()
 			{
-				Lg::setThreadName("Test_client_" + std::to_string(i));
+				setThreadName("Test_client_" + std::to_string(i));
 				auto& chl = endpoint.addChannel(channelName + std::to_string(i), channelName + std::to_string(i));
 				ByteStream mH;
 
@@ -209,7 +209,7 @@ void BtNetwork_ConnectMany_Boost_Test()
 
 				//std::stringstream ss;
 				//ss << "server" << i << " done\n";
-				//Lg::out << ss.str();
+				//std::cout << ss.str();
 			});
 		}
 
@@ -220,7 +220,7 @@ void BtNetwork_ConnectMany_Boost_Test()
 
 		endpoint.stop();
 		ioService.stop();
-		//Lg::out << "server done" << Lg::endl;
+		//std::cout << "server done" << std::endl;
 	});
 
 	BtIOService ioService(1);
@@ -233,7 +233,7 @@ void BtNetwork_ConnectMany_Boost_Test()
 	{
 		threads.emplace_back([i, &endpoint, &buff, messageCount, print, channelName]()
 		{
-			Lg::setThreadName("Test_Host_" + std::to_string(i));
+			setThreadName("Test_Host_" + std::to_string(i));
 			auto& chl = endpoint.addChannel(channelName + std::to_string(i), channelName + std::to_string(i));
 			ByteStream mH(buff);
 
@@ -271,7 +271,7 @@ void BtNetwork_CrossConnect_Test()
 
 	auto thrd = std::thread([&]() {
 		BtIOService ioService(0);
-		//Lg::setThreadName("Net_Cross1_Thread");
+		//setThreadName("Net_Cross1_Thread");
 		BtEndpoint endpoint(ioService, "127.0.0.1", 1212, false, "endpoint");
 
 
@@ -357,13 +357,13 @@ void BtNetwork_ManyEndpoints_Test()
 
 	std::vector<std::thread> nodeThreads(nodeCount);
 
-	Lg::setThreadName("main");
+	setThreadName("main");
 
 	for (u64 i = 0; i < nodeCount; ++i)
 	{
 		nodeThreads[i] = std::thread([&, i]() {
 
-			Lg::setThreadName("node" + std::to_string(i));
+			setThreadName("node" + std::to_string(i));
 
 
 			u32 port;// = basePort + i;
@@ -418,7 +418,7 @@ void BtNetwork_ManyEndpoints_Test()
 				if (msg != expected)
 					throw UnitTestFail();
 			}
-			//Lg::out << Lg::lock << "re " << i << Lg::endl << Lg::unlock;
+			//std::cout << Lg::lock << "re " << i << std::endl << Lg::unlock;
 
 			for (auto chl : channels)
 				chl->close();

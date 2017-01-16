@@ -1,18 +1,18 @@
 #include "PSI/AsyncPsiSender.h"
-#include "Crypto/Commit.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Crypto/Commit.h"
+#include "cryptoTools/Common/Log.h"
 
-namespace libBDX
+namespace osuCrypto
 {
 
 
 #define PSI_DEBUG
 
-	extern	block PRF(const block& b, u64 i);
+	extern	block psiPRF(const block& b, u64 i);
 
 
 
-	void AsyncPsiSender::init(u64 inputSize, u64 wordSize, Channel & chl, I_OTExtSender & otSend, u64& otIdx, PRNG& prng)
+	void AsyncPsiSender::init(u64 inputSize, u64 wordSize, Channel & chl, BDX_OTExtSender & otSend, u64& otIdx, PRNG& prng)
 	{
 
 		mWordSize = wordSize;
@@ -44,7 +44,7 @@ namespace libBDX
 		{
 			mMyPermute[j].reset(mWordSize);
 			mMyPermute[j].randomize(prng);
-			//Lg::out << "send " << (u16)this << " perm " << mMyPermute[j] << Lg::endl;
+			//std::cout << "send " << (u16)this << " perm " << mMyPermute[j] << std::endl;
 		}
 
 		//mShares.resize(std::array<u64, 4>{ {theirInputSize, myInputSize, mWordSize, 2} });
@@ -65,6 +65,7 @@ namespace libBDX
 			{
 
 				buff.reset(new ByteStream(sizeof(Commit) * mWordSize * 2));
+                auto buffIter = (Commit*)buff->data();
 
 				// for each of the inputs in this PSMT, encode them using the same ot msgs, and make
 				// them unique using the prf and my input idx
@@ -77,7 +78,7 @@ namespace libBDX
 				for (b = 0; b < mWordSize - 1; ++b, ++oti)
 				{
 					// compute the next blinding term
-					Zi = ZeroBlock;// prng.get_block();
+					Zi = ZeroBlock;// prng.get<block>();
 					ZiXorSum = ZiXorSum ^ Zi;
 
 					// permute the b'th bit encoding of my j'th input by mMyPermute[j][b]. use the
@@ -86,36 +87,36 @@ namespace libBDX
 
 					// make the share the PRF of the OT msg and our input idx, then xor it with the
 					// blinding value Zi.
-					mShares[i][j][b][0] = PRF(otSend.GetMessage(oti, c), j) ^ Zi;
-					mShares[i][j][b][1] = PRF(otSend.GetMessage(oti, c ^ 1), j) ^ Zi;
+					mShares[i][j][b][0] = psiPRF(otSend.GetMessage(oti, c), j) ^ Zi;
+					mShares[i][j][b][1] = psiPRF(otSend.GetMessage(oti, c ^ 1), j) ^ Zi;
 
 					//if (oti < PsiOTCount(myInputSize, mWordSize))
-					//	Lg::out << "  recv r" << i << " s" << j << " b" << b << " " << mShares[i][j][b][0] << " " << mShares[i][j][b][1] << Lg::endl;
+					//	std::cout << "  recv r" << i << " s" << j << " b" << b << " " << mShares[i][j][b][0] << " " << mShares[i][j][b][1] << std::endl;
 
-					//Lg::out << "send " << (u16)this << " "
+					//std::cout << "send " << (u16)this << " "
 						//<< otSend.GetMessage(oti, c) << " ("<< (u32)c <<") ,j -> " << mShares[i][j][b][0] << "     " 
-						//<< otSend.GetMessage(oti, c ^ 1) << " (" << (u32)(c^1) << ") ,j -> "<< mShares[i][j][b][1]  << "  "  << oti << Lg::endl;
+						//<< otSend.GetMessage(oti, c ^ 1) << " (" << (u32)(c^1) << ") ,j -> "<< mShares[i][j][b][1]  << "  "  << oti << std::endl;
 
 					// append the commitment of the shares to the buffer
-					buff->append(Commit(mShares[i][j][b][0]));
-					buff->append(Commit(mShares[i][j][b][1]));
-				}
+					(*buffIter++) =(Commit(mShares[i][j][b][0]));
+					(*buffIter++) =(Commit(mShares[i][j][b][1]));
+				}               
 
 				// do the same thing but set Zi to be ZiXorSum so that the Zi's sum to zero
 				Zi = ZiXorSum;
 
 				u8 c = mMyPermute[j][b];
 
-				mShares[i][j][b][0] = PRF(otSend.GetMessage(oti, c), j) ^ Zi;
-				mShares[i][j][b][1] = PRF(otSend.GetMessage(oti, c ^ 1), j) ^ Zi;
+				mShares[i][j][b][0] = psiPRF(otSend.GetMessage(oti, c), j) ^ Zi;
+				mShares[i][j][b][1] = psiPRF(otSend.GetMessage(oti, c ^ 1), j) ^ Zi;
 
-				//Lg::out << "send " << (u16)this << " "
+				//std::cout << "send " << (u16)this << " "
 				//	<< otSend.GetMessage(oti, c) << " (" << (u32)c << ") ,j -> " << mShares[i][j][b][0] << "     "
-				//	<< otSend.GetMessage(oti, c ^ 1) << " (" << (u32)(c ^ 1) << ") ,j -> " << mShares[i][j][b][1] << "  " << oti << Lg::endl;
+				//	<< otSend.GetMessage(oti, c ^ 1) << " (" << (u32)(c ^ 1) << ") ,j -> " << mShares[i][j][b][1] << "  " << oti << std::endl;
 
 
-				buff->append(Commit(mShares[i][j][b][0]));
-				buff->append(Commit(mShares[i][j][b][1]));
+                (*buffIter++) = (Commit(mShares[i][j][b][0]));
+                (*buffIter++) = (Commit(mShares[i][j][b][1]));
 
 				chl.asyncSend(std::move(buff));
 
@@ -158,9 +159,9 @@ namespace libBDX
 		std::unique_ptr<BitVector>inputPermute(new BitVector(mMyPermute[i]));
 		chl.asyncSend(std::move(inputPermute));
 
-		//Lg::out << "P" << (int)role << " cmp  mTheirPermute[" << j << "] = " << mTheirPermute[j] << Lg::endl;
+		//std::cout << "P" << (int)role << " cmp  mTheirPermute[" << j << "] = " << mTheirPermute[j] << std::endl;
 		//Lg::mMtx.lock();
-		//Lg::out << "send " << (u16)this << " input " << i << "  " << input << "  correct " << mMyPermute[i]<< Lg::endl << Lg::endl;
+		//std::cout << "send " << (u16)this << " input " << i << "  " << input << "  correct " << mMyPermute[i]<< std::endl << std::endl;
 		//Lg::mMtx.unlock();
 
 		u64 rem = --mRemainingInputCommits;
@@ -195,13 +196,13 @@ namespace libBDX
 				{
 
 					u8 bit = mTheirPermute[i][b] ^ mMyPermute[j][b];
-					//Lg::out << "  send " << (u16)this << " r" << i << " s" << j << " b" << b << "  bit " << (int)bit << "=" << (int)mMyPermute[j][b] << "+" << (int)mTheirPermute[i][b] << "  " << mShares[i][j][b][bit] << Lg::endl;
+					//std::cout << "  send " << (u16)this << " r" << i << " s" << j << " b" << b << "  bit " << (int)bit << "=" << (int)mMyPermute[j][b] << "+" << (int)mTheirPermute[i][b] << "  " << mShares[i][j][b][bit] << std::endl;
 					//tt = tt ^ mShares[i][j][b][bit];
 
-					mOpenBuff[i][j]->append(mShares[i][j][b][bit]);
+					((block*)mOpenBuff[i][j]->data())[b] = (mShares[i][j][b][bit]);
 				}
 
-				//Lg::out << "send " << (u16)this << " sum r " << i << " s " << j<< "  " << tt << Lg::endl << Lg::endl;
+				//std::cout << "send " << (u16)this << " sum r " << i << " s " << j<< "  " << tt << std::endl << std::endl;
 			}
 
 		//}

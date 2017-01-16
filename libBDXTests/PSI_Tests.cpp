@@ -1,20 +1,20 @@
 #include "PSI_Tests.h"
 
 #include "Common.h"
-#include "Common/Defines.h"
+#include "cryptoTools/Common/Defines.h"
 #include "PSI/PSIReceiver.h"
 #include "PSI/PSISender.h"
-#include "Network/BtEndpoint.h"
-#include "OTOracleReceiver.h"
-#include "OTOracleSender.h"
-#include "Common/Logger.h"
+#include "cryptoTools/Network/BtEndpoint.h"
+#include "OT/OTExtReceiver.h"
+#include "OT/OTExtSender.h"
+#include "cryptoTools/Common/Log.h"
 //
 //#include "cryptopp/aes.h"
 //#include "cryptopp/modes.h"
 //#include "MyAssert.h"
 #include <array>
 
-using namespace libBDX;
+using namespace osuCrypto;
 
 void Psi_EmptrySet_Test_Impl()
 {
@@ -25,8 +25,8 @@ void Psi_EmptrySet_Test_Impl()
 	std::vector<block> sendSet(setSize), recvSet(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		sendSet[i] = prng.get_block();
-		recvSet[i] = prng.get_block();
+		sendSet[i] = prng.get<block>();
+		recvSet[i] = prng.get<block>();
 	}
 
 	std::string name("psi");
@@ -41,8 +41,26 @@ void Psi_EmptrySet_Test_Impl()
 		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
 
-	OTOracleSender OTSender(prng, PsiSender::PsiOTCount(setSize, psiSecParam) * repeatCount);
-	OTOracleReceiver OTRecver(OTSender, prng, PsiReceiver::PsiOTCount(setSize, psiSecParam)*repeatCount);
+	//OTOracleSender OTSender(prng, PsiSender::PsiOTCount(setSize, psiSecParam) * repeatCount);
+	//OTOracleReceiver OTRecver(OTSender, prng, PsiReceiver::PsiOTCount(setSize, psiSecParam)*repeatCount);
+
+    BDX_OTExtReceiver OTRecver;
+    BDX_OTExtSender OTSender;
+    {
+        std::atomic<u64> _1(0), _2(0);
+        std::array<block, 128> baseRecvMsg;
+        BitVector baseRecvChoice(128); baseRecvChoice.randomize(prng);
+        std::array<std::array<block, 2>, 128>baseSendMsg;
+        prng.get(baseSendMsg.data(), baseSendMsg.size());
+        for (u64 i = 0; i < 128; ++i)
+        {
+            baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
+        }
+        u64 numOTs = PsiSender::PsiOTCount(setSize, psiSecParam) * repeatCount + 4;
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        thrd.join();
+    }
 
 	//PsiSender sender;
 	//PsiReceiver recv;
@@ -139,7 +157,7 @@ void Psi_EmptrySet_Test_Impl()
 
 void Psi_FullSet_Test_Impl()
 {
-	Lg::setThreadName("CP_Test_Thread");
+	setThreadName("CP_Test_Thread");
 	u64 repeatCount = 4;
 	u64 setSize = 9, psiSecParam = 41;
 	PRNG prng(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
@@ -148,7 +166,7 @@ void Psi_FullSet_Test_Impl()
 	std::vector<block> sendSet(setSize), recvSet(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		sendSet[i] = recvSet[i] = prng.get_block();
+		sendSet[i] = recvSet[i] = prng.get<block>();
 	}
 
 	std::shuffle(sendSet.begin(), sendSet.end(), prng);
@@ -169,8 +187,26 @@ void Psi_FullSet_Test_Impl()
 		recvChls[i] = &ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
 		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
-	OTOracleSender OTSender(prng, PsiSender::PsiOTCount(setSize, psiSecParam));
-	OTOracleReceiver OTRecver(OTSender, prng, PsiSender::PsiOTCount(setSize, psiSecParam));
+	//OTOracleSender OTSender(prng, PsiSender::PsiOTCount(setSize, psiSecParam));
+	//OTOracleReceiver OTRecver(OTSender, prng, PsiSender::PsiOTCount(setSize, psiSecParam));
+
+    BDX_OTExtReceiver OTRecver;
+    BDX_OTExtSender OTSender;
+    {
+        std::atomic<u64> _1(0), _2(0);
+        std::array<block, 128> baseRecvMsg;
+        BitVector baseRecvChoice(128); baseRecvChoice.randomize(prng);
+        std::array<std::array<block, 2>, 128>baseSendMsg;
+        prng.get(baseSendMsg.data(), baseSendMsg.size());
+        for (u64 i = 0; i < 128; ++i)
+        {
+            baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
+        }
+        u64 numOTs = PsiSender::PsiOTCount(setSize, psiSecParam) ;
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        thrd.join();
+    }
 
 	PsiSender sender;
 	PsiReceiver recv;
@@ -263,7 +299,7 @@ void Psi_FullSet_Test_Impl()
 
 void Psi_SingltonSet_Test_Impl()
 {
-	Lg::setThreadName("Sender");
+	setThreadName("Sender");
 	//InitDebugPrinting("..//test.out");
 	u64 repeatCount = 4;
 	u64 setSize = 8, psiSecParam = 40;
@@ -274,8 +310,8 @@ void Psi_SingltonSet_Test_Impl()
 	std::vector<block> sendSet(setSize), recvSet(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		sendSet[i] = prng.get_block();
-		recvSet[i] = prng.get_block();
+		sendSet[i] = prng.get<block>();
+		recvSet[i] = prng.get<block>();
 	}
 
 	sendSet[setSize / 2] = recvSet[0];
@@ -296,8 +332,26 @@ void Psi_SingltonSet_Test_Impl()
 		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
 
-	OTOracleSender OTSender(prng, otCount * repeatCount + 4);
-	OTOracleReceiver OTRecver(OTSender, prng, otCount * repeatCount + 4);
+	//OTOracleSender OTSender(prng, otCount * repeatCount + 4);
+	//OTOracleReceiver OTRecver(OTSender, prng, otCount * repeatCount + 4);
+
+    BDX_OTExtReceiver OTRecver;
+    BDX_OTExtSender OTSender;
+    {
+        std::atomic<u64> _1(0), _2(0);
+        std::array<block, 128> baseRecvMsg;
+        BitVector baseRecvChoice(128); baseRecvChoice.randomize(prng);
+        std::array<std::array<block, 2>, 128>baseSendMsg;
+        prng.get(baseSendMsg.data(), baseSendMsg.size());
+        for (u64 i = 0; i < 128; ++i)
+        {
+            baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
+        }
+        u64 numOTs = otCount * repeatCount + 4;
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        thrd.join();
+    }
 
 	u64 otRecvIdx = 4;
 	u64 otSendIdx = 4;
@@ -391,8 +445,8 @@ void Psi_SingltonSet_Test_Impl()
 		PsiReceiver& recv = recvPSIs[j];
 		auto& send = sendPSIs[j];
 
-		Lg::out << Lg::endl << recv.timer << Lg::endl;
-		Lg::out << Lg::endl << send.timer << Lg::endl;
+		//Lg::out << Lg::endl << recv.timer << Lg::endl;
+		//Lg::out << Lg::endl << send.timer << Lg::endl;
 	}
 	ep0.stop();
 	ep1.stop();
@@ -406,7 +460,7 @@ void Psi_SingltonSet_Test_Impl()
 
 void Psi_SingltonSet_Serial_Test_Impl()
 {
-	Lg::setThreadName("Sender");
+	setThreadName("Sender");
 	//InitDebugPrinting("..//test.out");
 	u64 setSize = 2, psiSecParam = 8;
 	u64 otCount = PsiSender::PsiOTCount(setSize, psiSecParam);
@@ -416,8 +470,8 @@ void Psi_SingltonSet_Serial_Test_Impl()
 	std::vector<block> sendSet(setSize), recvSet(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		sendSet[i] = prng.get_block();
-		recvSet[i] = prng.get_block();
+		sendSet[i] = prng.get<block>();
+		recvSet[i] = prng.get<block>();
 	}
 
 	sendSet[setSize / 2] = recvSet[0];
@@ -438,8 +492,26 @@ void Psi_SingltonSet_Serial_Test_Impl()
 		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
 
-	OTOracleSender OTSender(prng, otCount);
-	OTOracleReceiver OTRecver(OTSender, prng, otCount);
+	//OTOracleSender OTSender(prng, otCount);
+	//OTOracleReceiver OTRecver(OTSender, prng, otCount);
+
+    BDX_OTExtReceiver OTRecver;
+    BDX_OTExtSender OTSender;
+    {
+        std::atomic<u64> _1(0), _2(0);
+        std::array<block, 128> baseRecvMsg;
+        BitVector baseRecvChoice(128); baseRecvChoice.randomize(prng);
+        std::array<std::array<block, 2>, 128>baseSendMsg;
+        prng.get(baseSendMsg.data(), baseSendMsg.size());
+        for (u64 i = 0; i < 128; ++i)
+        {
+            baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
+        }
+        u64 numOTs = otCount;// *repeatCount + 4;
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        thrd.join();
+    }
 
 	u64 otRecvIdx = 4;
 	u64 otSendIdx = 4;
@@ -459,6 +531,7 @@ void Psi_SingltonSet_Serial_Test_Impl()
 		{
 			sender.CommitRecv(*sendChls[i], i);
 		}
+        //std::this_thread::sleep_for(std::chrono::seconds(5));
 
 
 		for (u64 i = 0; i < setSize; ++i)
@@ -482,6 +555,7 @@ void Psi_SingltonSet_Serial_Test_Impl()
 
 	for (u64 i = 0; i < setSize; ++i)
 		recv.CommitSend(recvSet[i], *recvChls[i], i);
+
 
 	for (u64 i = 0; i < setSize; ++i)
 		recv.CommitRecv(*recvChls[i], i);
