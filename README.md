@@ -25,11 +25,11 @@ There are two location which the library by default looks for these dependencies
 Building on linux consists of aquiring the dependencies and calling `cmake -G "Unix Makefiles"; make;`. The dependencies include [libOTe](https://github.com/osu-crypto/libOTe) and [NTL](http://www.shoup.net/ntl/). The following commands should build the library and all dependencies 
 
 ```
-git clone https://github.com/osu-crypto/libOTe.git
+git clone  --recursive https://github.com/osu-crypto/libOTe.git
 cd libOTe/thirdparty/linux
 bash all.get
 cd ../..
-CMake  -G "Unix Makefiles"
+cmake  -G "Unix Makefiles"
 make
 cd ..
 git clone https://github.com/osu-crypto/batchDualEx.git
