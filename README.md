@@ -26,8 +26,11 @@ Building on linux consists of aquiring the dependencies and calling `cmake -G "U
 
 ```
 git clone https://github.com/osu-crypto/libOTe.git
-cd ./libOTe
-bash ./buildAll.ps1
+cd libOTe/thirdparty/linux
+bash all.get
+cd ../..
+CMake  -G "Unix Makefiles"
+make
 cd ..
 git clone https://github.com/osu-crypto/batchDualEx.git
 cd ./batchDualEx/thirdparty/linux
