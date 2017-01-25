@@ -49,7 +49,7 @@ make
 
 The unit tests can be run be executing
 
-`./Release/frontend.exe -u`
+`./bin/frontend.exe -u`
 
 When using Visual Studio, the is an additional project which integrates the tests into the Test Explorer. This window can be found under Tests->windows->Test Explorer. From here all the unit tests can be run. Note that if you get the following message
 
@@ -64,12 +64,12 @@ Also, the *ReadBris tests may fail if they can't find the circuit file. You can 
 
 The primary program can be run as a single executable. i.e.
 
-`./Release/frontend.exe`
+`./bin/frontend.exe`
 
 Or it can be run as two seperate programs where two programs perform each half of the protocol. In this case, call
 
-`./Release/frontend.exe -r 0 &`<br>
-`./Resease/frontend.exe -r 1`
+`./bin/frontend.exe -r 0 &`<br>
+`./bin/frontend.exe -r 1`
 
 Or call them in different terminals without the &. Many other parameters can be set too. This includes:
 * Port number (-p, --port = 1212)
