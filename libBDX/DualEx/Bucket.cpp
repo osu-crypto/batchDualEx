@@ -1,6 +1,7 @@
 #include "Bucket.h"
 #include "cryptoTools/Common/Log.h"
 #include "cryptoTools/Common/Timer.h"
+#include "cryptoTools/Common/ArrayView.h"
 
 //#define DUALEX_DEBUG  
 
@@ -202,7 +203,7 @@ namespace osuCrypto
 		u64 start[2] = { 0 , cir.Inputs()[0] };
 
 		std::unique_ptr<ByteStream> buff(new ByteStream(sizeof(block) * 2 * theirKProbe.encodingSize()));
-        ArrayIterator<block> buffIter = buff->getArrayView<block>().begin();
+                auto buffIter = buff->getArrayView<block>().begin();
 
 		std::array<const block*, 2> OTMsgs = { { &mTheirCircuits[0]->OTSendMsg(0, 0), &mTheirCircuits[0]->OTSendMsg(0, 1) } };
 

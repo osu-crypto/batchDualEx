@@ -129,6 +129,7 @@ void NetWork_all()
 
 void runAll()
 {
+	//AES128_all();
 	Circuit_all();
 	CircuitPackage_all();
 	DualExActor_all();
