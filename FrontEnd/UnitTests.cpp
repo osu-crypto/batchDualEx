@@ -130,12 +130,12 @@ void NetWork_all()
 void runAll()
 {
 	//AES128_all();
-	//Circuit_all();
-	//CircuitPackage_all();
-	//DualExActor_all();
-	//HalfGtGarbledCircuit_all();
-	//KProbe_all();
+	Circuit_all();
+	CircuitPackage_all();
+	DualExActor_all();
+	HalfGtGarbledCircuit_all();
+	KProbe_all();
 	PSI_all();
-	//NetWork_all();
-	//OT_all();
+	NetWork_all();
+	OT_all();
 }

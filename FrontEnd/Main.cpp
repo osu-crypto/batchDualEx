@@ -6,7 +6,7 @@
 #include <vector>
 #include <thread>
 #include "boost/asio.hpp"
-#include "boost/filesystem.hpp"
+//#include "boost/filesystem.hpp"
 #include <functional>
 #include <cassert>
 #include <chrono>
@@ -312,8 +312,8 @@ void commandLineMain(int argc, const char** argv)
 		std::fstream fStrm(file);
 		if (fStrm.is_open() == false)
 		{
-			boost::filesystem::path getcwd(boost::filesystem::current_path());
-			std::cout << "Current path is: " << getcwd << std::endl;
+		  //boost::filesystem::path getcwd(boost::filesystem::current_path());
+		  //std::cout << "Current path is: " << getcwd << std::endl;
 			std::cout << "failed to open circuit file: " << file << std::endl;
 
 			throw std::runtime_error("");
@@ -486,8 +486,8 @@ void Eval(
 		std::fstream fStrm(filepath);
 		if (fStrm.is_open() == false)
 		{
-			boost::filesystem::path getcwd(boost::filesystem::current_path());
-			std::cout << "Current path is: " << getcwd << std::endl;
+		  //boost::filesystem::path getcwd(boost::filesystem::current_path());
+		  //std::cout << "Current path is: " << getcwd << std::endl;
 			std::cout << "failed to open circuit file: " << filepath << std::endl; 
 				
 			throw std::runtime_error("");
