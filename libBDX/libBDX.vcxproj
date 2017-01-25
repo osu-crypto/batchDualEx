@@ -68,7 +68,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\libs/boost;$(SolutionDir)\thirdparty\win\ntl\include;C:\libs\NTL\include;C:\libs;$(SolutionDir)/libBDX;C:\libs\miracl;$(SolutionDir)/../libOTe;$(SolutionDir)/../libOTe/thirdparty/win/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <PreprocessorDefinitions>_MBCS;%(PreprocessorDefinitions); _WIN32_WINNT=0x0501</PreprocessorDefinitions>
+      <PreprocessorDefinitions>SOLUTION_DIR=R"**($(SolutionDir))**";_MBCS;%(PreprocessorDefinitions); _WIN32_WINNT=0x0501</PreprocessorDefinitions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>

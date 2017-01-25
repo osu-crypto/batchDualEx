@@ -1,15 +1,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{29C9DEBC-5AE5-4157-B6E3-0BCB01966B9A}"
 	ProjectSection(SolutionItems) = preProject
-		backLog.txt = backLog.txt
-		debug.mak = debug.mak
-		Makefile = Makefile
-		Makefile.old = Makefile.old
-		Performance1.psess = Performance1.psess
-		release.mak = release.mak
+		.gitignore = .gitignore
+		CMakeLists.txt = CMakeLists.txt
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FrontEnd", "FrontEnd\FrontEnd.vcxproj", "{DD3BF0D6-F1F9-4D1B-A3E8-73104ECFD387}"

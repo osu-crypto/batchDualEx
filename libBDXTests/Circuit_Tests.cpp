@@ -156,10 +156,10 @@ void Circuit_BrisRead_Adder32_Test_Impl()
 
 	Circuit cir;
 	std::fstream in;
-	in.open(testData + "/circuits/adder_32bit.txt");
+	in.open(testData +   "/circuits/adder_32bit.txt");
 
 	if (in.is_open() == false)
-		throw UnitTestFail("failed to open file: " + testData + "/circuits/adder_32bit.txt");
+		throw UnitTestFail("failed to open file: " +  testData +  "/circuits/adder_32bit.txt");
 
 	cir.readBris(in);
 
@@ -203,10 +203,10 @@ void DagCircuit_BrisRead_Adder32_Test_Impl()
 
 	DagCircuit dag;
 	std::fstream in;
-	in.open(testData + "/circuits/adder_32bit.txt");
+	in.open(testData +   "/circuits/adder_32bit.txt");
 
 	if (in.is_open() == false)
-		throw UnitTestFail("failed to open file: " + testData + "/circuits/adder_32bit.txt");
+		throw UnitTestFail("failed to open file: " +  testData +   "/circuits/adder_32bit.txt");
 	 
 	dag.readBris(in);
 

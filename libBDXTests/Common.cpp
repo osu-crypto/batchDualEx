@@ -6,7 +6,7 @@
 using namespace osuCrypto;
 
 static std::fstream* file = nullptr;
-std::string testData("../..");
+std::string testData(testData);
 
 void InitDebugPrinting(std::string filePath)
 {
