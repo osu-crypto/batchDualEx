@@ -16,7 +16,7 @@ This library has been tested and designed to work on both Windows and Linux.
 
 #### Windows
 
-On Windows the primary way to build the library is the provided Visual Studio Solution. Once the third party dependencies have been made, the solution should build the library, unit tests, and the frontend appliation. The third party dependencies include [Boost](http://www.boost.org/), [Crypto++](https://www.cryptopp.com/), [Miracl-SDK](http://www.miracl.com/miracl-sdk), [Mpir](http://mpir.org/), and [NTL](http://www.shoup.net/ntl/). For all but the NTL library, the repository contains powershell scripts to download and build them. These scripts are located in the ./thirdparty/win/ folder. Although there is a script called getNTL.ps1, it only downloads NTL but does not build it. To build NTL, users can either follow the instructions provided by NTL (using a emulated unix compiler) or use visual studio. 
+On Windows the primary way to build the library is the provided Visual Studio Solution. Once the third party dependencies have been made, the solution should build the library, unit tests, and the frontend appliation. The third party dependencies include [Boost](http://www.boost.org/), [Crypto++](https://www.cryptopp.com/), [Miracl-SDK](http://www.miracl.com/miracl-sdk), [Mpir](http://mpir.org/), and [NTL](http://www.shoup.net/ntl/). The repository contains powershell scripts to download and build them. These scripts are located in the ./thirdparty/win/ folder. 
 
 There are two location which the library by default looks for these dependencies, C:/libs/* and the relatitive directory ./thirdparty/win/. By default, the scripts will place the libraries in the folder in which they are executed. 
 
