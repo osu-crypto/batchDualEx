@@ -22,7 +22,7 @@ There are two location which the library by default looks for these dependencies
 
 #### Linux
 
-Building on linux consists of aquiring the dependencies and calling `cmake -G "Unix Makefiles"; make;`. The dependencies include [lobOTe](https://github.com/osu-crypto/libOTe) and [NTL](http://www.shoup.net/ntl/). The following commands should build the library and all dependencies 
+Building on linux consists of aquiring the dependencies and calling `cmake -G "Unix Makefiles"; make;`. The dependencies include [libOTe](https://github.com/osu-crypto/libOTe) and [NTL](http://www.shoup.net/ntl/). The following commands should build the library and all dependencies 
 
 ```
 git clone https://github.com/osu-crypto/libOTe.git
