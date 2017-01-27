@@ -6,6 +6,7 @@ bin/*
 *CMakeFiles/
 *Makefile
 *.cmake
+timeFile*
 
 # User-specific files
 *.suo

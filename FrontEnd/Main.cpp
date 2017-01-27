@@ -621,10 +621,10 @@ void Eval(
     thrd.join();
 
     std::cout << "Done. " << std::endl << std::endl;
-    std::cout << "total offline   = " << std::chrono::duration_cast<std::chrono::milliseconds>(initFinish - initStart).count() << " ms" << std::endl;
-    std::cout << "total online    = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() << " ms" << std::endl;
-    std::cout << "time/eval       = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / numExe << " us" << std::endl;
-    std::cout << "min eval time   = " << std::chrono::duration_cast<std::chrono::microseconds>(min).count() << " us" << std::endl << std::endl << std::endl;
+    std::cout << "total offline   = " << std::chrono::duration_cast<std::chrono::microseconds>(initFinish - initStart).count() /1000.0<< " ms" << std::endl;
+    std::cout << "total online    = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / 1000.0 << " ms" << std::endl;
+    std::cout << "time/eval       = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / numExe / 1000.0 << " ms" << std::endl;
+    std::cout << "min eval time   = " << std::chrono::duration_cast<std::chrono::microseconds>(min).count() / 1000.0 << " ms" << std::endl << std::endl << std::endl;
 
     if (verbose)
     {
