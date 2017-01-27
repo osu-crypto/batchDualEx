@@ -83,6 +83,7 @@ Or call them in different terminals without the &. Many other parameters can be 
 * **Concurrent Evlauation (-e, --evalConcurrently = 1):** The number of executions that should be performed in parallel. 1 means sequentual. Used to compute throughput.
 * **Threads per evaluation (-c, --circuitThreads = -b):** An parameter that allow you to set how many threads are used in the online phase (per evaluation).
 * **Statistical Security (-k, --statisticalK = 40)**
+* **Verbose (-v, --verbose = false):** print additional information such as detailed timing and communication overhead.
 
 **NOTE**: By default there are no open circuits in the cut and choose, therefore its insecure. For secure parameters, refer to the provided paper.
 

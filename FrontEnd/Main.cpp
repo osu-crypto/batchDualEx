@@ -33,7 +33,7 @@
 using namespace ez;
 using namespace osuCrypto;
 
-void Eval(std::string, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval, Timer& timer);
+void Eval(std::string, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval,bool v, Timer& timer);
 
 
 void pingTest(Endpoint& netMgr, Role role)
@@ -310,7 +310,7 @@ void commandLineMain(int argc, const char** argv)
     }
     else if (opt.get("-r")->isSet == false)
     {
-        Eval(file, numExec, bucketSize, numOpened, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, timer);
+        Eval(file, numExec, bucketSize, numOpened, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, verbose, timer);
         return;
     }
 
@@ -448,7 +448,7 @@ void commandLineMain(int argc, const char** argv)
     {
 
         std::cout << std::endl << std::endl << "detailed time:  Label    totalTime(ms)   difference(us) " << std::endl;
-        std::cout << timer << std::endl << std::endl << "Comunication info:\n";
+        std::cout << timer << std::endl << std::endl << "Communication info:\n";
 
 
         std::cout << "Input request size         " << cir.Inputs()[role] / 8 << " bytes" << std::endl;
@@ -466,9 +466,6 @@ void commandLineMain(int argc, const char** argv)
         std::cout << "Translation open size      " << sizeof(block) << " bytes" << std::endl;
         std::cout << "Sync PSI Open size         " << sizeof(block) *  bucketSize * bucketSize << " bytes" << std::endl << std::endl;
 #endif
-
-
-
     }
 
     //std::cout << "total " << std::chrono::duration_cast<std::chrono::milliseconds>(finished - initStart).count() - sleepTime << " ms" << std::endl;
@@ -491,6 +488,7 @@ void Eval(
     u64 numConcurrentSetups,
     u64 numConcurrentEvals,
     u64 numThreadsPerEval,
+    bool verbose,
     Timer& timer)
 {
     u64 psiSecParam = 40;
@@ -500,7 +498,7 @@ void Eval(
     std::fstream in;
     in.open(filepath);
 
-    Circuit c;
+    Circuit cir;
 
     std::cout << "reading circuit" << std::endl;
     {
@@ -514,18 +512,18 @@ void Eval(
             throw std::runtime_error("");
         }
 
-        c.readBris(fStrm);
+        cir.readBris(fStrm);
     }
 
 
-    std::cout << "circuit inputs " << c.Inputs()[0] << " " << c.Inputs()[1] << std::endl;
-    std::cout << "circuit num gates " << c.Gates().size() << std::endl;
-    std::cout << "circuit num and gates " << c.NonXorGateCount() << std::endl;
+    std::cout << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << std::endl;
+    std::cout << "circuit num gates " << cir.Gates().size() << std::endl;
+    std::cout << "circuit num and gates " << cir.NonXorGateCount() << std::endl;
 
-    //c = AdderCircuit(4);
-    //c.xorShareInputs();
+    //cir = AdderCircuit(4);
+    //cir.xorShareInputs();
 
-    //c.init();
+    //cir.init();
 
 
     BtIOService ios(0);
@@ -542,12 +540,12 @@ void Eval(
     auto thrd = std::thread([&]() {
         setThreadName("Actor0");
 
-        DualExActor actor0(c, Role::First, numExe, bucketSize, numOpened, psiSecParam, netMgr0);
+        DualExActor actor0(cir, Role::First, numExe, bucketSize, numOpened, psiSecParam, netMgr0);
 
         Timer timer;
         actor0.init(prng0, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, timer);
 
-        BitVector input0(c.Inputs()[0]);
+        BitVector input0(cir.Inputs()[0]);
         *input0.data() = 2;
 
         std::vector<std::thread> evalThreads(numConcurrentEvals);
@@ -574,7 +572,7 @@ void Eval(
     //BtIOService ios(0);
     BtEndpoint netMgr1(ios, "127.0.0.1", 1212, false, "ss");
 
-    DualExActor actor1(c, Role::Second, numExe, bucketSize, numOpened, psiSecParam, netMgr1);
+    DualExActor actor1(cir, Role::Second, numExe, bucketSize, numOpened, psiSecParam, netMgr1);
 
     std::cout << "Initializing..." << std::endl;
 
@@ -586,7 +584,7 @@ void Eval(
 
     //std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    BitVector input1(c.Inputs()[1]);
+    BitVector input1(cir.Inputs()[1]);
     //*input1.data() = 3;
 
     std::cout << "exec start..." << std::endl;
@@ -628,9 +626,29 @@ void Eval(
     std::cout << "time/eval       = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / numExe << " us" << std::endl;
     std::cout << "min eval time   = " << std::chrono::duration_cast<std::chrono::microseconds>(min).count() << " us" << std::endl << std::endl << std::endl;
 
+    if (verbose)
+    {
 
-    std::cout << "detailed time:  Label    totalTime(ms)   difference(us) " << std::endl;
-    std::cout << timer;
+        std::cout << std::endl << std::endl << "detailed time:  Label    totalTime(ms)   difference(us) " << std::endl;
+        std::cout << timer << std::endl << std::endl << "Communication info:\n";
+
+
+        std::cout << "Input request size (role = 0)  " << cir.Inputs()[0] / 8 << " bytes" << std::endl;
+        std::cout << "My input size                  " << cir.Inputs()[0] * sizeof(block) * bucketSize << " bytes" << std::endl;
+        std::cout << "Their input size               " << cir.Inputs()[1] * sizeof(block) * bucketSize << " bytes" << std::endl;
+
+#ifdef ASYNC_PSI
+        std::cout << "Async PSI commit send size     " << bucketSize * psiSecParam / 8 << " bytes" << std::endl;
+        std::cout << "Async PSI commit recv size     " << bucketSize * psiSecParam / 8 << " bytes" << std::endl;
+        std::cout << "Translation open size          " << sizeof(block) << " bytes" << std::endl;
+        std::cout << "Async PSI Open size            " << sizeof(block) * psiSecParam *  bucketSize * bucketSize << " bytes" << std::endl << std::endl;
+#else                                               
+        std::cout << "PSI OT permute size            " << bucketSize * psiSecParam / 8 << " bytes" << std::endl;
+        std::cout << "PSI sender commit size         " << bucketSize * bucketSize * sizeof(block) << " bytes" << std::endl;
+        std::cout << "Translation open size          " << sizeof(block) << " bytes" << std::endl;
+        std::cout << "Sync PSI Open size             " << sizeof(block) *  bucketSize * bucketSize << " bytes" << std::endl << std::endl;
+#endif
+    }
 
     actor1.close();
 
