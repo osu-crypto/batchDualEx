@@ -381,7 +381,7 @@ void commandLineMain(int argc, const char** argv)
 
 	std::vector<u64> times(numExec);
 	std::vector<std::thread> evalThreads(numConcurrentEvals);
-
+    int iii = 0;
 	
 	for (u64 j = 0; j < numConcurrentEvals; ++j)
 	{
@@ -400,6 +400,7 @@ void commandLineMain(int argc, const char** argv)
 				//std::this_thread::sleep_for(std::chrono::mi(j));
 				
 				//std::cout << "Exec" << i << std::endl;
+                ++iii;
 				actor.execute(i, prng, input, timer);
 
 				auto now = t2.setTimePoint("");
@@ -415,6 +416,7 @@ void commandLineMain(int argc, const char** argv)
 		});
 	} 
 
+
 	auto finished = timer.setTimePoint("Exec Finished");
 	for (u64 j = 0; j < numConcurrentEvals; ++j)
 	{
@@ -422,6 +424,7 @@ void commandLineMain(int argc, const char** argv)
 	}
 	u64 min = 9999999;// initFinish - initStart;
 	u64 onlineTotal = 0;
+    std::cout << "called " << iii << std::endl;
 
 	std::fstream timeFile;
 	timeFile.open("./timeFile.txt", std::ios::trunc | std::ios::out);
