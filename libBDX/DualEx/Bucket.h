@@ -92,7 +92,50 @@ namespace osuCrypto
 			Role role);
 		void Clear();
 
-		std::vector<BitVector> mOutputs;
+        // returns the bucket-wide (head) garbled output of 
+        // the evaluated garbled circuits
+        // @ dest [out]: The location that the wire labels should be stored.
+        void getGarbledOutput(
+            const ArrayView<block>& dest);
+
+        // returns the bucket-wide (head) garbled output of 
+        // the Gerbled garbled circuits.
+        // @ dest [out]: THe location that the putput wire labels should be stored
+        void getGarbledOutput(
+            const ArrayView<std::array<block,2>>& dest);
+
+        // returns the circuitIdx'th garbled output for the evaluated circuits.
+        // @ circuitIdx [in]: The index of the circuit that the garbled output
+        //      labels should be taken. 
+        // @ dest [out]: The location that the garbled output labels should be stored
+        void getGarbledOutput(
+            u64 circuitIdx, 
+            const ArrayView<block>& dest);
+
+        // returns the circuitIdx'th garbled output labels that were generated locally.
+        // @ circuitIdx [in]: The index of the circuit that the garbled output
+        //      labels should be taken. 
+        // @ dest [out]: The location that the garbled output labels should be stored.
+        // @ freeXorOffset [out]: The location this circuits free xor wire offset should be stored.
+        void getGarbledOutput(
+            u64 circuitIdx, 
+            const ArrayView<block>& dest,
+            block& freeXorOffset);
+
+        // sets the garbled inputs on the circuitIdx'th evaluation circuit.
+        //     e.g. evalCircuit[circuitIdx].inputLabels[wireIdx[i]] = src[i]; for all i.
+        // @ wireIdxs [in]: The indexes of the input labels that should be set.
+        //     Note: parameter will be moved.
+        // @ src [in]: The wire labels that should be used. One set for each circuit
+        //     Note: parameter will be moved.
+        void setGarbledInput(
+            std::vector<u64>&& wireIdxs,
+            std::vector<std::vector<block>>&& src);
+
+
+
+        u32 mPSIIdxHead;
+        std::vector<BitVector> mOutputs;
 
 		BitVector mTheirInputCorrection;
 		std::unique_ptr<BitVector> mInputCorrectionString;
@@ -119,7 +162,6 @@ namespace osuCrypto
 		std::promise<BitVector*> mOutputProm;
 		std::future<BitVector*> mOutputFuture;
 
-		u32 mPSIIdxHead;
 		std::atomic<i32>  mTransCheckRemaining, mOutputMissCount;
 		std::vector<block> mPSIInputBlocks;
 
@@ -150,6 +192,20 @@ namespace osuCrypto
 		/// these are the common output labels that we chose for this bucket. they will use their translation values to map to these values.
 		std::vector<std::array<block, 2>> mCommonOutput;
 
+        // these are the evaluated common output encoding (head) that the PSI said was correct.
+        std::vector<block> mCommonEvalOutput;
+        // these are the evaluated output encoding that the PSI said was correct.
+        std::vector<std::vector<block>> mEvalOutput;
+
+        //std::vector<std::pair<std::vector<u64>>
+
+        // the circuit input wire indexes that shouls be copy to
+        std::vector<u64> mCopyInLabelIdxs;
+
+        // the wire labels that should be copied to where mCopyInLabelIdxs specifies before a circuit is evaluated
+        std::vector<std::vector<block>> mCopyInLabels;
+
+        u64 mPsiResult;
 		std::vector<u64> mPSIInputPermutes;
 		std::mutex mPsiInputMtx;
 

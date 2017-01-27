@@ -45,6 +45,7 @@ namespace osuCrypto
 	{
 		mPsiSend.init(bucketSize, psiSecParam, chl, otSend, otIdx, prng);
 
+        mEvalOutput.resize(bucketSize);
 		mPSIInputBlocks.resize(bucketSize);
 		mPSIIdxHead = 0;
 		mPsiInputPromise.resize(bucketSize);
@@ -59,6 +60,7 @@ namespace osuCrypto
 		for (u64 i = 0; i < bucketSize; ++i)
 		{
 			mPSIInputPermutes[i] = i;
+            mEvalOutput[i].resize(cir.Outputs().size());
 			mTranlation[i].resize(cir.Outputs().size());
 			chl.recv(mTranlation[i].data(), mTranlation[i].size() * sizeof(block) * 2);
 
@@ -502,7 +504,16 @@ namespace osuCrypto
 
 			labels[idx] = mMyDecodedKProbeLabels[b][i] ^ labels[idx];
 		}
-		//}
+		
+
+        // copy in any extra wire labels that are set by some external source (RAM)
+
+        for (u64 i = 0; i < mCopyInLabelIdxs.size(); ++i)
+        {
+
+            labels[mCopyInLabelIdxs[i]] = mCopyInLabels[b][i];
+        }
+
 
 
 #ifdef DUALEX_DEBUG
@@ -559,11 +570,16 @@ namespace osuCrypto
 			tweaks[0] = tweaks[0] + OneBlock;
 			tweaks[1] = tweaks[1] + OneBlock;
 
+
 			// use the permute bit and the circuits translation table to decide on the truth value.
 			mOutputs[b][i] = PermuteBit(labels[cir.Outputs()[i]]) ^ mTheirCircuits[b]->mCircuit.mTranslationTable[i];
 			u8 bit = mOutputs[b][i];
 
+
+
 			block theirCommonOutput = hash[bit] ^ mTranlation[b][i][bit];
+
+            mEvalOutput[b][i] = theirCommonOutput;
 
 #ifdef DUALEX_DEBUG
 			if (theirCommonOutput != DEBUG_theirCommonOutput[i][bit])
@@ -768,18 +784,93 @@ namespace osuCrypto
 
 	void Bucket::Clear()
 	{
-		mCommonOutput.clear();
+        mCommonOutput.clear();
+        mCommonOutput.shrink_to_fit();
 		//mTheirDeltas.clear();
-		mOutputs.clear();
-		mTranlation.clear();
+        mOutputs.clear();
+        mOutputs.shrink_to_fit();
+        mTranlation.clear();
+        mTranlation.shrink_to_fit();
 
 		for (u64 i = 0; i < mMyCircuits.size(); ++i)
 		{
 			mTheirCircuits[i]->clear();
 			mMyCircuits[i]->clear();
+
+            mEvalOutput[i].resize(0);
+            mEvalOutput[i].shrink_to_fit();
 		}
 
-		mMyCircuits.clear();
-		mTheirCircuits.clear();
+        mMyCircuits.clear();
+        mMyCircuits.shrink_to_fit();
+        mTheirCircuits.clear();
+        mTheirCircuits.shrink_to_fit();
+        mCommonEvalOutput.clear();
+        mCommonEvalOutput.shrink_to_fit();
+
+
 	}
+
+
+    void Bucket::getGarbledOutput(
+        const ArrayView<block>& dest)
+    {
+
+#ifndef NDEBUG
+        if (dest.size() != mCommonEvalOutput.size())
+            throw std::runtime_error("Expecting dest to have the correct size.\n " LOCATION);
+#endif // !NDEBUG
+
+
+        memcpy(dest.data(), mCommonEvalOutput.data(), dest.size() * sizeof(block));
+    }
+
+
+    void Bucket::getGarbledOutput(
+        const ArrayView<std::array<block, 2>>& dest)
+    {
+
+#ifndef NDEBUG
+        if (dest.size() != mCommonOutput.size())
+            throw std::runtime_error("Expecting dest to have the correct size.\n " LOCATION);
+#endif // !NDEBUG
+
+
+        memcpy(dest.data(), mCommonOutput.data(), dest.size() * sizeof(block) * 2);
+    }
+
+    void Bucket::getGarbledOutput(u64 circuitIdx, const ArrayView<block>& dest)
+    {
+#ifndef NDEBUG
+        if (dest.size() != mCommonOutput.size())
+            throw std::runtime_error("Expecting dest to have the correct size.\n " LOCATION);
+#endif // !NDEBUG
+
+
+        memcpy(dest.data(), mEvalOutput.data(), dest.size() * sizeof(block));
+
+    }
+
+    void Bucket::getGarbledOutput(u64 circuitIdx, const ArrayView<block>& dest, block & freeXorOffset)
+    {
+#ifndef NDEBUG
+        if (dest.size() != mCommonOutput.size())
+            throw std::runtime_error("Expecting dest to have the correct size.\n " LOCATION);
+#endif // !NDEBUG
+
+        freeXorOffset = mMyCircuits[circuitIdx]->mCircuit.mGlobalOffset;
+
+        memcpy(dest.data(), mMyCircuits[circuitIdx]->mCircuit.mOutputWires.data(), dest.size());
+    }
+
+    void Bucket::setGarbledInput(
+        std::vector<u64>&& wireIdxs,
+        std::vector<std::vector<block>>&& src)
+    {
+        mCopyInLabelIdxs = std::move(wireIdxs);
+        mCopyInLabels = std::move(src);
+    }
+
+
+
 }

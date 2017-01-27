@@ -17,7 +17,7 @@ using namespace osuCrypto;
 
 void run(std::string name, std::function<void(void)> func)
 {
-	std::cout << name;
+	std::cout << name << std::flush;
 
 	auto start = std::chrono::high_resolution_clock::now();
 	try 
