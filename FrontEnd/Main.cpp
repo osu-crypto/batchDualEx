@@ -337,7 +337,7 @@ void commandLineMain(int argc, const char** argv)
         std::cout << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << std::endl;
 
     BtIOService ios(0);
-    BtEndpoint netMgr(ios, "127.0.0.1", 1212, role, "ss");
+    BtEndpoint netMgr(ios, hostname, portnum, role, "ss");
     //NetworkManager netMgr(hostname, portnum, 6, role);
 
     if (verbose)
