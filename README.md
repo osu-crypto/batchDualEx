@@ -72,8 +72,8 @@ Or it can be run as two seperate programs where two programs perform each half o
 `./bin/frontend.exe -r 1`
 
 Or call them in different terminals without the &. Many other parameters can be set too. This includes:
-* **Port number (-p, --port = 1212):** The port that -r 0  listens on.
-* **Hostname (-h, --hostname = localhost):** The IP address that -r 0 listens on.
+* **Port number (-p, --port = 1212):** The port that -r 1  listens on.
+* **Hostname (-h, --hostname = localhost):** The IP address that -r 1 listens on.
 * **Number of execution (-n, --nExec = 128):** The number of executions.
 * **Bucket size (-b, --bcktSize = 4):** The Bucket size that determines the number of GCs that are evaluated at runtime (See paper for safe parameters). 
 * **Number of opened circuit (-o, --open = 0):** The number of GCs that are checked during the cut and choose (See paper for safe parameters).
