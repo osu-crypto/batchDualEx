@@ -2,6 +2,7 @@
 #include "cryptoTools/Network/Channel.h"
 #include "cryptoTools/Common/Timer.h"
 #include "cryptoTools/Network/BtEndpoint.h"
+#include "signalHandle.h"
 
 #include <vector>
 #include <thread>
@@ -33,7 +34,7 @@
 using namespace ez;
 using namespace osuCrypto;
 
-void Eval(std::string, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval,bool v, Timer& timer);
+void Eval(Circuit& cir, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval, bool v, Timer& timer);
 
 
 void pingTest(Endpoint& netMgr, Role role)
@@ -131,7 +132,7 @@ void commandLineMain(int argc, const char** argv)
     ezOptionParser opt;
 
     opt.add(
-        "",
+        "./",
         0,
         1,
         0,
@@ -308,41 +309,64 @@ void commandLineMain(int argc, const char** argv)
         runAll();
         return;
     }
-    else if (opt.get("-r")->isSet == false)
+    Circuit cir;
+
+
+    if (verbose) std::cout << "reading circuit: " << file;
+
+
+    std::fstream fStrm(file);
+    if (fStrm.is_open() == false)
     {
-        Eval(file, numExec, bucketSize, numOpened, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, verbose, timer);
+        //boost::filesystem::path getcwd(boost::filesystem::current_path());
+        //std::cout << "Current path is: " << getcwd << std::endl;
+        std::cout << "\nfailed to open circuit file: " << file << std::endl;
+
+        throw std::runtime_error("");
+    }
+
+
+    cir.readBris(fStrm);
+
+    if (verbose) std::cout << std::endl;
+
+    if (cir.Inputs()[0] * cir.Inputs()[1] == 0)
+    {
+        std::cout << " **** circuit has one party input. changing circuit to two party by XOR splitting the input. **** " << std::endl;
+
+        cir.xorShareInputs();
+    }
+
+
+    if (verbose)
+    {
+        std::cout << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << std::endl;
+        std::cout << "circuit num gates " << cir.Gates().size() << std::endl;
+        std::cout << "circuit num AND gates " << cir.NonXorGateCount() << std::endl;
+        std::cout << "circuit num outputs " << cir.OutputCount() << std::endl;
+    }
+
+
+    if (opt.get("-r")->isSet == false)
+    {
+        if(verbose) std::cout << "\n                Single Terminal Eval\n" << std::endl;
+
+        Eval(cir, numExec, bucketSize, numOpened, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, verbose, timer);
         return;
     }
 
-    Circuit cir;
-
-    if (verbose)
-        std::cout << "reading circuit..." << std::endl;
-
-    {
-        std::fstream fStrm(file);
-        if (fStrm.is_open() == false)
-        {
-            //boost::filesystem::path getcwd(boost::filesystem::current_path());
-            //std::cout << "Current path is: " << getcwd << std::endl;
-            std::cout << "failed to open circuit file: " << file << std::endl;
-
-            throw std::runtime_error("");
-        }
-
-        cir.readBris(fStrm);
-    }
-
-    if (verbose)
-        std::cout << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << std::endl;
 
     BtIOService ios(0);
     BtEndpoint netMgr(ios, hostname, portnum, role, "ss");
-    //NetworkManager netMgr(hostname, portnum, 6, role);
+
 
     if (verbose)
-        std::cout << "Connecting..." << std::endl;
-
+    {
+        std::cout << "Connecting..." ;
+        auto fu = std::async([&]() {netMgr.addChannel("___testchannel____").close(); });
+        while (fu.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) std::cout << ".";
+        std::cout << std::endl;
+    }
 
     if (opt.get("-i")->isSet)
     {
@@ -433,20 +457,21 @@ void commandLineMain(int argc, const char** argv)
 
         timeFile << times[i] << std::endl;
     }
+    auto offlineTotal = std::chrono::duration_cast<std::chrono::microseconds>(initFinish - initStart).count();
 
     actor.printTimes("./timeFile");
 
     //std::cout << "initTime " << std::chrono::duration_cast<std::chrono::milliseconds>(initFinish - initStart).count() << " ms" << std::endl;
     std::cout << "Done. " << std::endl << std::endl;
-    std::cout << "total offline   = " << std::chrono::duration_cast<std::chrono::microseconds>(initFinish - initStart).count() / 1000.0 << " ms" << std::endl;
+    std::cout << "total offline   = " << offlineTotal / 1000.0 << " ms" << std::endl;
     std::cout << "total online    = " << onlineTotal / 1000.0 << " ms" << std::endl;
-    std::cout << "time/eval       = " << onlineTotal / numExec / 1000.0 << " ms" << std::endl;
-    std::cout << "min eval time   = " << min / 1000.0 << " ms" << std::endl;
-
+    std::cout << "offline / eval  = " << offlineTotal / numExec / 1000.0 << " ms" << std::endl;
+    std::cout << "online / eval   = " << onlineTotal / numExec / 1000.0 << " ms" << std::endl;
 
     if (verbose)
     {
 
+        std::cout << "min online time = " << min / 1000.0 << " ms" << std::endl;
         std::cout << std::endl << std::endl << "detailed time:  Label    totalTime(ms)   difference(us) " << std::endl;
         std::cout << timer << std::endl << std::endl << "Communication info:\n";
 
@@ -481,7 +506,7 @@ void commandLineMain(int argc, const char** argv)
 #include "Common.h"
 
 void Eval(
-    std::string filepath,
+    Circuit& cir,
     u64 numExe,
     u64 bucketSize,
     u64 numOpened,
@@ -495,35 +520,7 @@ void Eval(
 
     setThreadName("Actor1");
 
-    std::fstream in;
-    in.open(filepath);
 
-    Circuit cir;
-
-    std::cout << "reading circuit" << std::endl;
-    {
-        std::fstream fStrm(filepath);
-        if (fStrm.is_open() == false)
-        {
-            //boost::filesystem::path getcwd(boost::filesystem::current_path());
-            //std::cout << "Current path is: " << getcwd << std::endl;
-            std::cout << "failed to open circuit file: " << filepath << std::endl;
-
-            throw std::runtime_error("");
-        }
-
-        cir.readBris(fStrm);
-    }
-
-
-    std::cout << "circuit inputs " << cir.Inputs()[0] << " " << cir.Inputs()[1] << std::endl;
-    std::cout << "circuit num gates " << cir.Gates().size() << std::endl;
-    std::cout << "circuit num and gates " << cir.NonXorGateCount() << std::endl;
-
-    //cir = AdderCircuit(4);
-    //cir.xorShareInputs();
-
-    //cir.init();
 
 
     BtIOService ios(0);
@@ -621,7 +618,7 @@ void Eval(
     thrd.join();
 
     std::cout << "Done. " << std::endl << std::endl;
-    std::cout << "total offline   = " << std::chrono::duration_cast<std::chrono::microseconds>(initFinish - initStart).count() /1000.0<< " ms" << std::endl;
+    std::cout << "total offline   = " << std::chrono::duration_cast<std::chrono::microseconds>(initFinish - initStart).count() / 1000.0 << " ms" << std::endl;
     std::cout << "total online    = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / 1000.0 << " ms" << std::endl;
     std::cout << "time/eval       = " << std::chrono::duration_cast<std::chrono::microseconds>(finished - initFinish).count() / numExe / 1000.0 << " ms" << std::endl;
     std::cout << "min eval time   = " << std::chrono::duration_cast<std::chrono::microseconds>(min).count() / 1000.0 << " ms" << std::endl << std::endl << std::endl;
@@ -661,6 +658,8 @@ void Eval(
 
 int main(int argc, const char** argv)
 {
+    backtraceHook();
+
     //Eval();
     commandLineMain(argc, argv);
     /*

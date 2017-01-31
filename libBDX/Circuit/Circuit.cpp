@@ -5,7 +5,8 @@
 #include <sstream>
 #include <unordered_map>
 #include <set>
-#include "Circuit/DagCircuit.h"
+
+
 
 namespace osuCrypto {
 
@@ -13,13 +14,13 @@ namespace osuCrypto {
 
 	Circuit::Circuit()
 	{
-		mWireCount = mNonXorGateCount = mOutputCount = 0;
+		mWireCount = mNonXorGateCount = 0;
 	}
 	Circuit::Circuit(std::array<u64, 2> inputs)
 		: mInputs(inputs)
 	{
 		mWireCount = mInputs[0] + mInputs[1];
-		mNonXorGateCount = mOutputCount = 0;
+		mNonXorGateCount =  0;
 
 		//mIndexArray.resize(InputWireCount());
 		//for (u64 i = 0; i < InputWireCount(); ++i)
@@ -70,24 +71,211 @@ namespace osuCrypto {
 		if (in.eof())
 			throw std::runtime_error("Circuit::readBris input istream is emprty");
 
-		DagCircuit dag;
-		dag.readBris(in);
+        //BetaCircuit c;
+        
+        u64 numGates; in >> numGates;
+        u64 numWires; in >> numWires;
 
-		if (reduce)
-			dag.removeInvertGates();
+        u64 p0InCount; in >> p0InCount;
+        u64 p1InCount; in >> p1InCount;
+        u64 outCount; in >> outCount;
 
-		dag.toCircuit(*this);
+        //mOutputs.resize(outCount);
+        //mOutputInverts.resize(outCount);
+        BitVector initialized(numWires), invertFlags(numWires);
+        std::vector<u64> defMap(numWires, -1), newIdxs(numWires, -1);
 
-		if (reduce)
-		{
-			if (mGates.size() != dag.mNonInvertGateCount)
-				throw std::runtime_error("");
-		}
-		else
-		{
-			if (mGates.size() != dag.mGates.size())
-				throw std::runtime_error("");
-		}
+        //std::vector<BetaWire> wires(numWires);
+
+        //BetaBundle 
+        //    in0Wires(p0InCount), 
+        //    in1Wires(p1InCount), 
+        //    temp(numWires - p0InCount - p1InCount);
+
+        //c.addInputBundle(in0Wires);
+        //c.addInputBundle(in1Wires);
+        //c.addTempWireBundle(temp);
+
+        
+        mInputs[0] = p0InCount;
+        mInputs[1] = p1InCount;
+        mWireCount = p0InCount + p1InCount;
+
+        for (u64 i = 0; i < p0InCount + p1InCount; ++i)
+        {
+            newIdxs[i] = i;
+            initialized[i] = 1;
+        }
+
+        u64 fanIn, fanOut, in0, in1, out;
+        std::string type;
+
+
+        for (u64 i = 0; i < numGates; ++i)
+        {
+            in >> fanIn >> fanOut;
+
+            if (fanIn == 1)
+            {
+                in >> in0 >> out >> type;
+                if (type != "INV")
+                {
+                    std::cout << "only INV gates are supported with fan in 1." << std::endl;
+                    throw std::runtime_error(LOCATION);
+                }
+
+                if (initialized[in0] == false)
+                {
+                    std::cout << "uninitialized wire used " << in0 << ". Input must be topological" << std::endl;
+                    throw std::runtime_error(LOCATION);
+                }
+
+                invertFlags[out] = 1;
+                defMap[out] = in0;
+
+                if (out >= numWires - outCount)
+                {
+                    AddOutputWire(newIdxs[in0], true);
+                }
+            }
+            else
+            {
+                in >> in0 >> in1 >> out >> type;
+
+                if (type != "AND" && type != "XOR")
+                {
+                    std::cout << "only AND, XOR gates are supported with fan in 2." << std::endl;
+                    throw std::runtime_error(LOCATION);
+                }
+
+                if (initialized[in0] == false)
+                {
+                    std::cout << "uninitialized wire used " << in0 << ". Input must be topological" << std::endl;
+                    throw std::runtime_error(LOCATION);
+                }
+
+                if (initialized[in1] == false)
+                {
+                    std::cout << "uninitialized wire used " << in1 << ". Input must be topological" << std::endl;
+                    throw std::runtime_error(LOCATION);
+                }
+
+                auto gt = type == "AND" ? GateType::And : GateType::Xor;
+                if (invertFlags[in0])
+                {
+                    gt = invertInputWire(0, gt);
+                    in0 = defMap[in0];
+                }
+
+                if (invertFlags[in1])
+                {
+                    gt = invertInputWire(1, gt);
+                    in1 = defMap[in1];
+                }
+
+                in0 = newIdxs[in0];
+                in1 = newIdxs[in1];
+
+                newIdxs[out] = AddGate(in0, in1, gt);
+
+                if (out >= numWires - outCount)
+                {
+                    AddOutputWire(newIdxs[out], false);
+                    //mOutputs[out + outCount - numWires] = newIdxs[out];
+                }
+
+            }
+
+            initialized[out] = 1;
+        }
+
+
+
+        //for (u64 i = 0; i < c.mGates.size(); ++i)
+        //{
+        //    switch (c.mGates[i].mType)
+        //    {
+        //    case GateType::Nor:
+        //    case GateType::nb_And:
+        //    case GateType::na_And :
+        //    case GateType::Xor:
+        //    case GateType::Nand:
+        //    case GateType::And:
+        //    case GateType::Nxor:
+        //    case GateType::nb_Or:
+        //    case GateType::na_Or:
+        //    case GateType::Or:
+        //    {
+
+        //        auto gt = c.mGates[i].mType;
+        //        in0 = c.mGates[i].mInput[0];
+        //        in1 = c.mGates[i].mInput[1];
+
+        //        if (in0 > p0InCount + p1InCount)
+        //        {
+        //            if (c.isInvert(in0))
+        //            {
+        //                gt = invertInputWire(0, gt);
+        //            }
+        //            if (c.isInvert(in0) || mGates[defMap[in0]].Type() == GateType::a)
+        //            {
+        //                in0 = mGates[defMap[in0]].mInput[0];
+        //            }
+        //        }
+        //        if (in1 > p0InCount + p1InCount)
+        //        {
+        //            if (c.isInvert(in1))
+        //            {
+        //                gt = invertInputWire(1, gt);
+        //            }
+        //            if (c.isInvert(in1) || mGates[defMap[in1]].Type() == GateType::a)
+        //                in1 = mGates[defMap[in1]].mInput[0];
+        //        }
+
+        //        c.mGates[i].mOutput = AddGate(
+        //            in0,
+        //            in1,
+        //            gt);
+
+        //        defMap[c.mGates[i].mOutput] = i;
+
+        //        break;
+        //    }
+        //    case GateType::a:
+        //    case GateType::na:
+        //        defMap[c.mGates[i].mOutput] = i;
+        //        break;
+        //    case GateType::nb:
+        //    case GateType::b:
+        //    case GateType::Zero:
+        //    case GateType::One:
+        //    default:
+        //        throw std::runtime_error(LOCATION);
+        //        break;
+        //    }
+
+        //    //AddGate()
+        //}
+
+
+		//DagCircuit dag;
+		//dag.readBris(in);
+
+		//if (reduce)
+		//	dag.removeInvertGates();
+
+		//dag.toCircuit(*this);
+
+		//if (reduce)
+		//{
+		//	if (mGates.size() != dag.mNonInvertGateCount)
+		//		throw std::runtime_error("");
+		//}
+		//else
+		//{
+		//	if (mGates.size() != dag.mGates.size())
+		//		throw std::runtime_error("");
+		//}
 
 		init();
 		//if (reduce)
@@ -137,12 +325,19 @@ namespace osuCrypto {
 
 	void Circuit::translate(std::vector<bool>& labels, std::vector<bool>& output)
 	{
-		output.resize(mOutputCount);
+        output.resize(mOutputs.size());
 		for (u64 i = 0; i < mOutputs.size(); i++)
 		{
 			auto& wireIdx = mOutputs[i];
 			output[i] = labels[wireIdx];
 		}
+
+
+        for (u64 i = 0; i < mOutputs.size(); ++i)
+        {
+            if (mOutputInverts[i])
+                output[i] = !output[i];
+        }
 	}
 
 	void Circuit::evaluate(BitVector& labels)
@@ -161,7 +356,7 @@ namespace osuCrypto {
 
 	void Circuit::translate(BitVector& labels, BitVector& output)
 	{
-		output.reset(mOutputCount);
+		output.reset(mOutputs.size());
 		for (u64 i = 0; i < mOutputs.size(); i++)
 		{
 			auto& wireIdx = mOutputs[i];
@@ -170,6 +365,12 @@ namespace osuCrypto {
 			//if (output[i] != labels[wireIdx])
 			//	throw std::runtime_error("");
 		}
+
+        for (u64 i = 0; i < mOutputs.size(); ++i)
+        {
+            if (mOutputInverts[i])
+                output[i] = !output[i];
+        }
 	}
 
 

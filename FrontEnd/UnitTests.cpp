@@ -43,11 +43,11 @@ void Circuit_all()
 {								      
 	std::cout << std::endl;		      
 	run("Circuit_BrisRead_Adder32      ", Circuit_BrisRead_Adder32_Test_Impl);
-	//run("Circuit_BrisRead_AES          ", Circuit_BrisRead_AES_Test_Impl);
-	//run("Circuit_BrisRead_SHA          ", Circuit_BrisRead_SHA_Test_Impl);
 	run("Circuit_Gen_Adder32           ", Circuit_Gen_Adder32_Test_Impl);
-	run("DagCircuit_BrisRead_Adder32   ", DagCircuit_BrisRead_Adder32_Test_Impl);
-	run("DagCircuit_RandomReduce       ", DagCircuit_RandomReduce_Test_Impl);
+	run("Circuit_BrisRead_AES          ", Circuit_BrisRead_AES_Test_Impl);
+	run("Circuit_BrisRead_SHA          ", Circuit_BrisRead_SHA_Test_Impl);
+	//run("DagCircuit_BrisRead_Adder32   ", DagCircuit_BrisRead_Adder32_Test_Impl);
+	//run("DagCircuit_RandomReduce       ", DagCircuit_RandomReduce_Test_Impl);
 }
 
 void CircuitPackage_all()

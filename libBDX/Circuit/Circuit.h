@@ -23,7 +23,7 @@ namespace osuCrypto {
 		Circuit(std::array<u64, 2> inputs);
 		~Circuit();
 
-		void readXML(std::istream& in);
+		//void readXML(std::istream& in);
 		void readBris(std::istream& in, bool reduce = true);
 		//void writeBris(std::ostream& out);
 
@@ -53,12 +53,12 @@ namespace osuCrypto {
 		//   mInputs[role] = count;
 		//}
 
-		inline void AddOutputWire(u64 i)
+		inline void AddOutputWire(u64 i, bool invert)
 		{
 			if (i >= mWireCount)
 				throw std::runtime_error("");
 			mOutputs.push_back(i);
-			++mOutputCount;
+            mOutputInverts.push_back(invert);
 		}
 
 		inline const u64 InputWireCount() const
@@ -73,9 +73,9 @@ namespace osuCrypto {
 		{
 			return mNonXorGateCount;
 		}
-		inline const u64& OutputCount()const
+		inline u64 OutputCount()const
 		{
-			return mOutputCount;
+            return mOutputs.size();
 		}
 
 		inline const std::array<u64, 2>& Inputs() const
@@ -93,6 +93,8 @@ namespace osuCrypto {
 		
 		void xorShareInputs();
 
+        std::vector<u8> mOutputInverts;
+
 		//std::vector<block> mIndexArray;
 	private:
 
@@ -101,7 +103,7 @@ namespace osuCrypto {
 		//void ParseXMLGates(pugi::xml_node& gates);
 		//void ParseXMLOutput(pugi::xml_node& outputs);
 
-		u64 mWireCount, mNonXorGateCount, mOutputCount;
+		u64 mWireCount, mNonXorGateCount;
 		std::array<u64, 2> mInputs;
 		std::vector<Gate> mGates;
 		std::vector<u64> mOutputs;

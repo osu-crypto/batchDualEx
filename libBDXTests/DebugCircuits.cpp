@@ -8,7 +8,7 @@ Circuit OneGateCircuit(GateType gt)
 	//cd.SetInputWireCount(Role::First, 1);
 	//cd.SetInputWireCount(Role::Second, 1);
 	cd.AddGate(0, 1, gt);
-	cd.AddOutputWire(2);
+	cd.AddOutputWire(2, false);
 	return cd;
 }
 
@@ -23,18 +23,18 @@ Circuit AdderCircuit(u64 bits)
 	cd.SetInputWireCount(Role::Second, bits);*/
 
 
-	cd.AddOutputWire(cd.AddGate(0, bits + diff, GateType::Xor));
+	cd.AddOutputWire(cd.AddGate(0, bits + diff, GateType::Xor), false);
 	carrys.push_back(cd.AddGate(0, bits + diff, GateType::And));
 
 	for (u64 i = 1; i < bits; ++i)
 	{
 		auto xorIn = cd.AddGate(i, i + bits + diff, GateType::Xor);
-		cd.AddOutputWire(cd.AddGate(xorIn, carrys.back(), GateType::Xor));
+		cd.AddOutputWire(cd.AddGate(xorIn, carrys.back(), GateType::Xor), false);
 		auto carry0 = cd.AddGate(xorIn, carrys.back(), GateType::And);
 		auto carry1 = cd.AddGate(i, i + bits + diff, GateType::And);
 		carrys.push_back(cd.AddGate(carry0, carry1, GateType::Or));
 	}
-	cd.AddOutputWire(carrys.back());
+	cd.AddOutputWire(carrys.back(), false);
 	cd.init();
 	return cd;
 }

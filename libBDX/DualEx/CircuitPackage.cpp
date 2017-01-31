@@ -67,6 +67,14 @@ namespace osuCrypto {
 #endif
 		mKProbeWireSeed = prng.get<block>();
 
+        //std::cout << IoStream::lock 
+        //    << "circuit = " << idx 
+        //    << " mOutputWires[0][0] = " << mCircuit.mOutputWires[0]
+        //    << " mOutputWires[0][1] = " << (mCircuit.mGlobalOffset ^ mCircuit.mOutputWires[0] )
+        //    << std::endl << IoStream::unlock;
+
+
+
 		mKProbeInputs.resize(theirKProbe.encodingSize());
 
 		assert(eq(indexArray[0], ZeroBlock));

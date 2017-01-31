@@ -5,27 +5,59 @@
 #include <array>
 
 namespace osuCrypto {
-	enum class GateType
-	{
-		Zero = 0, //0000,
-		Nor = 1, //0001
-		nb_And = 2, //0010
-		nb = 3, //0011
-		na_And = 4, //0100
-		na = 5, //0101
-		Xor = 6, //0110
-		Nand = 7, //0111
-		And = 8, //1000
-		Nxor = 9, //1001
-		a = 10,//1010
-		nb_Or = 11,//1011
-		b = 12,//1100
-		na_Or = 13,//1101
-		Or = 14,//1110
-		One = 15 //1111
-	};
+
+    enum class GateType : u8
+    {
+        Zero = 0,   //0000,
+        Nor = 1,    //0001
+        nb_And = 2, //0010
+        nb = 3,     //0011
+        na_And = 4, //0100
+        na = 5,     //0101
+        Xor = 6,    //0110
+        Nand = 7,   //0111
+        And = 8,    //1000
+        Nxor = 9,   //1001
+        a = 10,     //1010
+        nb_Or = 11, //1011
+        b = 12,     //1100
+        na_Or = 13,//1101
+        Or = 14,//1110
+        One = 15 //1111
+    };
 
 
+    inline u8 GateEval(GateType type, bool a, bool b)
+    {
+        u8 v = ((u8(a) & 1) | (u8(b) << 1));
+        return ((u8)type & (1 << v)) ? 1 : 0;
+    }
+
+    inline GateType invertInputWire(u64 wirePosition, const GateType& oldGateType)
+    {
+        if (wirePosition == 0)
+        {
+            // swap bit 0/1 and 2/3
+            auto s = u8(oldGateType);
+
+            return GateType(
+                (s & 1) << 1 | // bit 0 -> bit 1
+                (s & 2) >> 1 | // bit 1 -> bit 0
+                (s & 4) << 1 | // bit 3 -> bit 4
+                (s & 8) >> 1); // bit 4 -> bit 3
+        }
+        else if (wirePosition == 1)
+        {
+            // swap bit (0,1)/(2,3)
+            auto s = u8(oldGateType);
+
+            return GateType(
+                (s & 3) << 2 |  // bits (0,1) -> bits (2,3)
+                (s & 12) >> 2); // bits (2,3) -> bits (0,1)
+        }
+        else
+            throw std::runtime_error("");
+    }
 
 	struct Gate
 	{

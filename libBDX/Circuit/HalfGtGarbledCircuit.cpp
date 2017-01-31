@@ -136,16 +136,23 @@ namespace osuCrypto
 			}
 		}
 
-		chl.asyncSend(std::move(buff));
+        if (buff->size())
+        {
+            chl.asyncSend(std::move(buff));
+        }
 
-		mOutputWires.reserve(cd.Outputs().size());
+		mOutputWires.resize(cd.Outputs().size());
 		mTranslationTable.reset(cd.OutputCount());
 		for (u64 i = 0; i < cd.Outputs().size(); ++i)
 		{
-			mOutputWires.push_back(wires[cd.Outputs()[i]]);
+			mOutputWires[i] = (wires[cd.Outputs()[i]]);
 			mTranslationTable[i] = PermuteBit(wires[cd.Outputs()[i]]);
 		}
-		chl.asyncSendCopy(mTranslationTable);
+
+        if (mTranslationTable.size())
+        {
+            chl.asyncSendCopy(mTranslationTable);
+        }
 
 #ifdef STRONGEVAL
 		mInternalWires = wires;
@@ -487,13 +494,17 @@ namespace osuCrypto
 #else
 			output[i] = (mTranslationTable[i] ^ PermuteBit(labels[cd.Outputs()[i]]));
 #endif
+
+            if (cd.mOutputInverts[i])
+                output[cd.Outputs()[i]] = !output[cd.Outputs()[i]];
 		}
+
+
 	}
 
 
 	void HalfGtGarbledCircuit::SendToEvaluator(Channel & channel)
 	{
-		auto buff = std::unique_ptr<ByteStream>(new ByteStream((u8*)mGates.data(), mGates.size() * sizeof(GarbledGate<2>)));
 
 		//for (u64 i = 0; i < mGates.size(); ++i)
 		//{
@@ -501,19 +512,34 @@ namespace osuCrypto
 		//	buff->append(ByteArray(mGates[i].mGarbledTable[1]), sizeof(block));
 		//}
 
-		channel.asyncSend(std::move(buff));
+        if (mGates.size())
+        {
+            auto buff = std::unique_ptr<ByteStream>(new ByteStream((u8*)mGates.data(), mGates.size() * sizeof(GarbledGate<2>)));
+            channel.asyncSend(std::move(buff));
+        }
 		
 		//mTranslationTable.pack(*buff);
-		channel.send(mTranslationTable);
+        if (mTranslationTable.size())
+        {
+    		channel.send(mTranslationTable);
+        }
 	}
 
 	void HalfGtGarbledCircuit::ReceiveFromGarbler(const Circuit& cd, Channel & channel)
 	{
 		mGates.resize(cd.NonXorGateCount());
-		channel.recv(mGates.data(), mGates.size() * sizeof(GarbledGate<2>));
+		
+        if (mGates.size())
+        {
+            channel.recv(mGates.data(), mGates.size() * sizeof(GarbledGate<2>));
+        }
 
 		mTranslationTable.reset(cd.OutputCount());
-		channel.recv(mTranslationTable.data(), mTranslationTable.sizeBytes());
+
+        if (cd.OutputCount())
+        {
+    		channel.recv(mTranslationTable.data(), mTranslationTable.sizeBytes());
+        }
 	}
 
 }

@@ -533,6 +533,16 @@ namespace osuCrypto
 #else
 		mTheirCircuits[b]->mCircuit.evaluate(cir, labels);
 #endif
+
+
+        //std::cout << IoStream::lock
+        //    << "circuit = " << mTheirCircuits[b]->mIdx
+        //    << " mOutputWires[0][?] = " << labels[cir.Outputs()[0]]
+        //    << std::endl << IoStream::unlock;
+
+
+
+
 		//timer.setTimePoint("evaluated");
 
 		// set this tweaks to this because 0 and cir.WireCount() tweak values were 
@@ -645,9 +655,7 @@ namespace osuCrypto
 
 
 
-			std::unique_ptr<ByteStream> buff(new ByteStream(cir.Inputs()[role] * sizeof(block)));
-			buff->setp(cir.Inputs()[role] * sizeof(block));
-			block* inputLabels = (block*)buff->data();
+			std::unique_ptr<ByteStream> buff(new ByteStream(cir.Inputs()[role] * sizeof(block))); auto inputLabels = buff->getArrayView<block>().begin();
 
 			block* myLabels = &mMyCircuits[cirIdx]->mCircuit.mInputWires[start[role]];
 			corrects[1] = mMyCircuits[cirIdx]->mCircuit.mGlobalOffset;
@@ -675,8 +683,7 @@ namespace osuCrypto
 			u64 theirInputSize = cir.Inputs()[1 ^ role];
 
 			std::unique_ptr<ByteStream> buff(new ByteStream(cir.Inputs()[1 ^ role] * sizeof(block)));
-			buff->setp(cir.Inputs()[role] * sizeof(block));
-			block* inputLabels = (block*)buff->data();
+			auto inputLabels = buff->getArrayView<block>().begin();
 
 			corrects[1] = mMyCircuits[cirIdx]->mCircuit.mGlobalOffset;
 			block* theirKProbeLabels = mTheirInputOffsets[cirIdx].data();
