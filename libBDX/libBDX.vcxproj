@@ -78,7 +78,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Circuit\DagCircuit.cpp" />
     <ClCompile Include="Circuit\Circuit.cpp" />
     <ClCompile Include="Circuit\HalfGtGarbledCircuit.cpp" />
     <ClCompile Include="Circuit\KProbeResistant.cpp" />
@@ -94,7 +93,6 @@
     <ClCompile Include="PSI\PSISender.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Circuit\DagCircuit.h" />
     <ClInclude Include="Circuit\Circuit.h" />
     <ClInclude Include="Circuit\GarbledCircuit.h" />
     <ClInclude Include="Circuit\Gate.h" />

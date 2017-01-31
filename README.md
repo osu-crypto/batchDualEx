@@ -72,17 +72,18 @@ Or it can be run as two seperate programs where two programs perform each half o
 `./bin/frontend.exe -r 1`
 
 Or call them in different terminals without the &. Many other parameters can be set too. This includes:
-* Port number (-p, --port = 1212)
-* Hostname (-h, --hostname = localhost)
-* Number of execution (-n, --nExec = 128)
-* Bucket size (-b, --bcktSize = 4)
-* Number of opened circuit (-o, --open = 0)
-* Circuit file (-f, --file = ./circuits/AES-non-expanded.txt)
-* Perform a ping test (-i, --ping = 0)
-* Concurrent Setup (-s, --setupConcurrently = 4)
-* Concurrent Evlauation (-e, --evalConcurrently = 1)
-* Threads per evaluation (-c, --circuitThreads = -b)
-* Statistical Security (-k, --statisticalK = 40)
+* **Port number (-p, --port = 1212):** The port that -r 1  listens on.
+* **Hostname (-h, --hostname = localhost):** The IP address that -r 1 listens on.
+* **Number of execution (-n, --nExec = 128):** The number of executions.
+* **Bucket size (-b, --bcktSize = 4):** The Bucket size that determines the number of GCs that are evaluated at runtime (See paper for safe parameters). 
+* **Number of opened circuit (-o, --open = 0):** The number of GCs that are checked during the cut and choose (See paper for safe parameters).
+* **Circuit file (-f, --file = ./circuits/AES-non-expanded.txt):** The location of the circuit file to be computed. Must be in [this format](https://www.cs.bris.ac.uk/Research/CryptographySecurity/MPC/).
+* **Perform a ping test (-i, --ping = 0):** Optional argument to have the program compute the throughtput and latency.
+* **Concurrent Setup (-s, --setupConcurrently = 4):** The number of threads that should be used during the setup phase.
+* **Concurrent Evlauation (-e, --evalConcurrently = 1):** The number of executions that should be performed in parallel. 1 means sequentual. Used to compute throughput.
+* **Threads per evaluation (-c, --circuitThreads = -b):** An parameter that allow you to set how many threads are used in the online phase (per evaluation).
+* **Statistical Security (-k, --statisticalK = 40)**
+* **Verbose (-v, --verbose = false):** print additional information such as detailed timing and communication overhead.
 
 **NOTE**: By default there are no open circuits in the cut and choose, therefore its insecure. For secure parameters, refer to the provided paper.
 

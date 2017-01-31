@@ -75,9 +75,6 @@
     <ClCompile Include="Circuit\KProbeResistant.cpp">
       <Filter>Source Files\Circuit</Filter>
     </ClCompile>
-    <ClCompile Include="Circuit\DagCircuit.cpp">
-      <Filter>Source Files\Circuit</Filter>
-    </ClCompile>
     <ClCompile Include="PSI\PSIReceiver.cpp">
       <Filter>Source Files\PSI</Filter>
     </ClCompile>
@@ -126,9 +123,6 @@
       <Filter>Header Files\PSI</Filter>
     </ClInclude>
     <ClInclude Include="Circuit\KProbeResistant.h">
-      <Filter>Header Files\Circuit</Filter>
-    </ClInclude>
-    <ClInclude Include="Circuit\DagCircuit.h">
       <Filter>Header Files\Circuit</Filter>
     </ClInclude>
     <ClInclude Include="PSI\AsyncPsiReceiver.h">

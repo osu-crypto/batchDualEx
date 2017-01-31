@@ -333,8 +333,16 @@ namespace osuCrypto
 			block sendSeed(prng.get<block>());
 			block recvSeed(prng.get<block>());
 
-			sendThrds[i] = std::thread([&, i, sendSeed]() {initSend(i, sendSeed, mCirRecvFutr[i], mTheirSetsFutr); });
-			recvThrds[i] = std::thread([&, i, recvSeed]() {initRecv(i, recvSeed, mCirRecvProm[i], mMyCnCSets); });
+			sendThrds[i] = std::thread([&, i, sendSeed]() 
+            {
+                setThreadName("initSend_" + std::to_string(mRole) + "_" + std::to_string(i));
+                initSend(i, sendSeed, mCirRecvFutr[i], mTheirSetsFutr); 
+            });
+			recvThrds[i] = std::thread([&, i, recvSeed]() 
+            {
+                setThreadName("initRecv_" + std::to_string(mRole) + "_" + std::to_string(i));
+                initRecv(i, recvSeed, mCirRecvProm[i], mMyCnCSets);
+            });
 		}
 
 		// in the mean time, lets init some stuff used in the online phase
@@ -545,7 +553,7 @@ namespace osuCrypto
 		// get their input wire label commitments.
 		for (u64 i = startIdx; i < endIdx; i++)
 		{
-			while (otDoneIdx < otIdx + mMyKProbe.encodingSize())std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			while (otDoneIdx < otIdx + mTheirKProbe.encodingSize())std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
 			//u64 tt = otIdx;
 
