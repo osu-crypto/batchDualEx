@@ -34,7 +34,10 @@
 using namespace ez;
 using namespace osuCrypto;
 
-void Eval(Circuit& cir, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval, bool v, Timer& timer);
+void Eval(Circuit& cir, u64 numExe, u64 bucketSize, u64 numOpened, u64 numConcurrentSetups, u64 numConcurrentEvals, u64 numThreadsPerEval,
+    bool v, 
+    bool timefiles,
+    Timer& timer);
 
 
 void pingTest(Endpoint& netMgr, Role role)
@@ -266,12 +269,20 @@ void commandLineMain(int argc, const char** argv)
         "--verbose");
 
 
+    opt.add(
+        "0",
+        0,
+        1,
+        0,
+        "Output additional timing information to text files.",
+        "-l",
+        "--timefiles");
     opt.parse(argc, argv);
 
     std::string hostname, file;
     u64 portnum, numExec, bucketSize, numOpened, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, psiSecParam;
     Role role;
-    int temp, verbose;
+    int temp, verbose, timefiles;
 
     opt.get("-r")->getInt(temp); role = (Role)temp;
     opt.get("-n")->getInt(temp); numExec = static_cast<u64>(temp);
@@ -284,6 +295,7 @@ void commandLineMain(int argc, const char** argv)
     opt.get("-h")->getString(hostname);
     opt.get("-f")->getString(file);
     verbose = opt.get("-v")->isSet;
+    timefiles = opt.get("-l")->isSet;
 
     if (opt.get("-c")->isSet)
     {
@@ -351,7 +363,18 @@ void commandLineMain(int argc, const char** argv)
     {
         if(verbose) std::cout << "\n                Single Terminal Eval\n" << std::endl;
 
-        Eval(cir, numExec, bucketSize, numOpened, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, verbose, timer);
+        Eval(
+            cir, 
+            numExec, 
+            bucketSize, 
+            numOpened,
+            numConcurrentSetups,
+            numConcurrentEvals,
+            numThreadsPerEval,
+            verbose,
+            timefiles,
+            timer);
+
         return;
     }
 
@@ -375,7 +398,7 @@ void commandLineMain(int argc, const char** argv)
 
 
     DualExActor actor(cir, role, numExec, bucketSize, numOpened, psiSecParam, netMgr);
-
+    actor.PRINT_EVAL_TIMES = actor.PRINT_SETUP_TIMES = timefiles;
 
     PRNG prng(_mm_set_epi64x(0, role));
 
@@ -514,6 +537,7 @@ void Eval(
     u64 numConcurrentEvals,
     u64 numThreadsPerEval,
     bool verbose,
+    bool timefiles,
     Timer& timer)
 {
     u64 psiSecParam = 40;
@@ -538,6 +562,7 @@ void Eval(
         setThreadName("Actor0");
 
         DualExActor actor0(cir, Role::First, numExe, bucketSize, numOpened, psiSecParam, netMgr0);
+        actor0.PRINT_EVAL_TIMES = actor0.PRINT_SETUP_TIMES = timefiles;
 
         Timer timer;
         actor0.init(prng0, numConcurrentSetups, numConcurrentEvals, numThreadsPerEval, timer);
@@ -570,6 +595,7 @@ void Eval(
     BtEndpoint netMgr1(ios, "127.0.0.1", 1212, false, "ss");
 
     DualExActor actor1(cir, Role::Second, numExe, bucketSize, numOpened, psiSecParam, netMgr1);
+    actor1.PRINT_EVAL_TIMES = actor1.PRINT_SETUP_TIMES = timefiles;
 
     std::cout << "Initializing..." << std::endl;
 
