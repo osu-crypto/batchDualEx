@@ -313,8 +313,9 @@ namespace osuCrypto
         chl.recv(&theirCnCCommit, sizeof(Commit));
 
         // Lets check that the parameters they are using match ours...
-        ByteStream paramBuffRecv;
-        chl.recv(paramBuffRecv);
+        ByteStream paramBuffRecv(sizeof(u64) * 9);
+        chl.recv(paramBuffRecv.data(), paramBuffRecv.size());
+
         u64 * params = (u64*)paramBuffRecv.data();
         if (*params++ != numParallelInit) { std::cout << "parameter mismatch: numParallelInit us " << numParallelInit << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: numParallelInit"); }
         if (*params++ != numParallelEval) { std::cout << "parameter mismatch: numParallelEval us " << numParallelEval << "  them " << *--params << std::endl;  throw std::runtime_error("parameter mismatch: numParallelEval"); }
@@ -573,7 +574,7 @@ namespace osuCrypto
         timer.setTimePoint("Circuits_OTInit_done");
 
         // a buffer that is used to unmask the circuit and 
-        std::vector<block> blockBuff(std::max(mCircuit.NonXorGateCount() * 2, mTheirKProbe.encodingSize()));
+        std::vector<block> blockBuff(std::max(std::max(mCircuit.NonXorGateCount() * 2, mTheirKProbe.encodingSize()), mMyKProbe.encodingSize()));
 
         block theirOTMsgXORSum = ZeroBlock;
 
