@@ -655,7 +655,8 @@ namespace osuCrypto
 
 
 
-			std::unique_ptr<ByteStream> buff(new ByteStream(cir.Inputs()[role] * sizeof(block))); auto inputLabels = buff->getArrayView<block>().begin();
+			std::vector<block> buff(cir.Inputs()[role]);
+			auto inputLabels = buff.begin();
 
 			block* myLabels = &mMyCircuits[cirIdx]->mCircuit.mInputWires[start[role]];
 			corrects[1] = mMyCircuits[cirIdx]->mCircuit.mGlobalOffset;
@@ -682,8 +683,8 @@ namespace osuCrypto
 
 			u64 theirInputSize = cir.Inputs()[1 ^ role];
 
-			std::unique_ptr<ByteStream> buff(new ByteStream(cir.Inputs()[1 ^ role] * sizeof(block)));
-			auto inputLabels = buff->getArrayView<block>().begin();
+			std::vector<block> buff(cir.Inputs()[1 ^ role]);
+			auto inputLabels = buff.begin();
 
 			corrects[1] = mMyCircuits[cirIdx]->mCircuit.mGlobalOffset;
 			block* theirKProbeLabels = mTheirInputOffsets[cirIdx].data();
