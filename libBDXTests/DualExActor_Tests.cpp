@@ -29,7 +29,7 @@ void DualExActor_BitAdder_Complete_Test_Impl()
 	std::string name("ss");
 	IOService ios(0);
 	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
-	Endpoint ep1(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
 	//Channel& recvChannel = ep1.addChannel(name, name);
 	//Channel& senderChannel = ep0.addChannel(name, name);
 	{
@@ -102,7 +102,7 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 	std::string name("ss");
 	IOService ios(0);
 	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
-	Endpoint ep1(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
 	//Channel& recvChannel = ep1.addChannel(name, name);
 	//Channel& senderChannel = ep0.addChannel(name, name);
 	{
@@ -175,8 +175,5 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 		thrd.join();
 	}
 
-	ep0.stop();
-	ep1.stop();
-	ios.stop();
 
 }
