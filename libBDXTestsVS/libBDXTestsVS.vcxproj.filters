@@ -50,8 +50,5 @@
     <ClCompile Include="KProbe_Tests_VS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BtChannel_TestsVS.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

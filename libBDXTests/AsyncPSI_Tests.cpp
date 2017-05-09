@@ -4,7 +4,7 @@
 #include "cryptoTools/Common/Defines.h"
 #include "PSI/AsyncPsiReceiver.h"
 #include "PSI/AsyncPsiSender.h"
-#include "cryptoTools/Network/BtEndpoint.h"
+#include "cryptoTools/Network/Endpoint.h"
 #include "cryptoTools/Common/Log.h"
 //
 //#include "cryptoTools/Cryptopp/aes.h"
@@ -34,14 +34,14 @@ void AsyncPsi_EmptrySet_Test_Impl()
 
 	std::string name("psi");
 
-	BtIOService ios(0);
-	BtEndpoint ep0(ios, "localhost", 1212, true, name);
-	BtEndpoint ep1(ios, "localhost", 1212, false, name);
-	std::vector<Channel*> sendChls(setSize),recvChls(setSize);
+	IOService ios(0);
+	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
+	std::vector<Channel> sendChls(setSize),recvChls(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		recvChls[i] = &ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
-		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
+		recvChls[i] = ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
+		sendChls[i] = ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
 
 	//OTOracleSender OTSender(prng, AsyncPsiSender::PsiOTCount(setSize, psiSecParam) * repeatCount);
@@ -61,8 +61,8 @@ void AsyncPsi_EmptrySet_Test_Impl()
             baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
         }
         u64 numOTs = AsyncPsiSender::PsiOTCount(setSize, psiSecParam) * repeatCount;
-        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
-        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, sendChls[0], _2);
         thrd.join();
     }
 	//AsyncPsiSender sender;
@@ -80,14 +80,14 @@ void AsyncPsi_EmptrySet_Test_Impl()
 		for (u64 j = 0; j < repeatCount; ++j)
 		{
 			u64 otIdx = 0;
-			sendPSIs[j].init(setSize, psiSecParam, *sendChls[0], OTSender, otIdx, prng);
+			sendPSIs[j].init(setSize, psiSecParam, sendChls[0], OTSender, otIdx, prng);
 		}
 	});
 
 	for (u64 j = 0; j < repeatCount; ++j)
 	{
 		u64 otIdx = 0;
-		recvPSIs[j].init(setSize, psiSecParam, *recvChls[0], OTRecver, otIdx);
+		recvPSIs[j].init(setSize, psiSecParam, recvChls[0], OTRecver, otIdx);
 	}
 	thrd0.join();
 
@@ -102,12 +102,12 @@ void AsyncPsi_EmptrySet_Test_Impl()
 				//BitVector recvOutput(setSize);
 
 
-				sender.AsyncCommitSend(sendSet[i], *sendChls[i], i);
+				sender.AsyncCommitSend(sendSet[i], sendChls[i], i);
 
-				sender.AsyncCommitRecv(*sendChls[i], i);
+				sender.AsyncCommitRecv(sendChls[i], i);
 
 				//	for (u64 i = 0; i < setSize; ++i)
-				sender.open(*sendChls[i], i);
+				sender.open(sendChls[i], i);
 			}
 		});
 
@@ -120,14 +120,14 @@ void AsyncPsi_EmptrySet_Test_Impl()
 				//recv.init(setSize, psiSecParam, recvChl, OTRecver, otIdx);
 
 				//for (u64 i = 0; i < setSize; ++i)
-				recv.CommitSend(recvSet[i], *recvChls[i], i);
+				recv.CommitSend(recvSet[i], recvChls[i], i);
 
 				//for (u64 i = 0; i < setSize; ++i)
-				recv.CommitRecv(*recvChls[i], i);
+				recv.CommitRecv(recvChls[i], i);
 
 				//recv.open(recvOutput, recvChl, time);
 
-				if (recv.open(*recvChls[i], i, Role::First))
+				if (recv.open(recvChls[i], i, Role::First))
 					throw UnitTestFail();
 				//}
 			}
@@ -138,18 +138,7 @@ void AsyncPsi_EmptrySet_Test_Impl()
 	{
 		sendThrds[i].join();
 		recvThrds[i].join();
-		sendChls[i]->close();
-		recvChls[i]->close();
 	}
-
-	ep0.stop();
-	ep1.stop();
-	ios.stop();
-
-	//thrd.join();
-
-	//recvChl.Close();
-	//sendChl.Close();
 }
 
 
@@ -176,14 +165,14 @@ void AsyncPsi_FullSet_Test_Impl()
 	//auto sendChls = netMgr0.AddChannels(name, setSize);
 	//auto recvChls = netMgr1.AddChannels(name, setSize);
 
-	BtIOService ios(0);
-	BtEndpoint ep0(ios, "localhost", 1212, true, name);
-	BtEndpoint ep1(ios, "localhost", 1212, false, name);
-	std::vector<Channel*> sendChls(setSize), recvChls(setSize);
+	IOService ios(0);
+	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
+	std::vector<Channel> sendChls(setSize), recvChls(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		recvChls[i] = &ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
-		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
+		recvChls[i] = ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
+		sendChls[i] = ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
 	//OTOracleSender OTSender(prng, AsyncPsiSender::PsiOTCount(setSize, psiSecParam));
 	//OTOracleReceiver OTRecver(OTSender, prng, AsyncPsiSender::PsiOTCount(setSize, psiSecParam));
@@ -201,8 +190,8 @@ void AsyncPsi_FullSet_Test_Impl()
             baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
         }
         u64 numOTs = AsyncPsiSender::PsiOTCount(setSize, psiSecParam) ;
-        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
-        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, sendChls[0], _2);
         thrd.join();
     }
 
@@ -221,14 +210,14 @@ void AsyncPsi_FullSet_Test_Impl()
 		for (u64 j = 0; j < repeatCount; ++j)
 		{
 			u64 otIdx = 0;
-			sendPSIs[j].init(setSize, psiSecParam, *sendChls[0], OTSender, otIdx, prng);
+			sendPSIs[j].init(setSize, psiSecParam, sendChls[0], OTSender, otIdx, prng);
 		}
 	}).join();
 
 	for (u64 j = 0; j < repeatCount; ++j)
 	{
 		u64 otIdx = 0;
-		recvPSIs[j].init(setSize, psiSecParam, *recvChls[0], OTRecver, otIdx);
+		recvPSIs[j].init(setSize, psiSecParam, recvChls[0], OTRecver, otIdx);
 	}
 
 
@@ -243,12 +232,12 @@ void AsyncPsi_FullSet_Test_Impl()
 				//BitVector recvOutput(setSize);
 
 
-				sender.AsyncCommitSend(sendSet[i], *sendChls[i], i);
+				sender.AsyncCommitSend(sendSet[i], sendChls[i], i);
 
-				sender.AsyncCommitRecv(*sendChls[i], i);
+				sender.AsyncCommitRecv(sendChls[i], i);
 
 				//	for (u64 i = 0; i < setSize; ++i)
-				sender.open(*sendChls[i], i);
+				sender.open(sendChls[i], i);
 			}
 		});
 
@@ -261,14 +250,14 @@ void AsyncPsi_FullSet_Test_Impl()
 				//recv.init(setSize, psiSecParam, recvChl, OTRecver, otIdx);
 
 				//for (u64 i = 0; i < setSize; ++i)
-				recv.CommitSend(recvSet[i], *recvChls[i], i);
+				recv.CommitSend(recvSet[i], recvChls[i], i);
 
 				//for (u64 i = 0; i < setSize; ++i)
-				recv.CommitRecv(*recvChls[i], i);
+				recv.CommitRecv(recvChls[i], i);
 
 				//recv.open(recvOutput, recvChl, time);
 
-				if (!recv.open(*recvChls[i], i, Role::First))
+				if (!recv.open(recvChls[i], i, Role::First))
 					throw UnitTestFail();
 				//}
 			}
@@ -279,15 +268,7 @@ void AsyncPsi_FullSet_Test_Impl()
 	{
 		sendThrds[i].join();
 		recvThrds[i].join();
-		sendChls[i]->close();
-		recvChls[i]->close();
 	}
-
-	ep0.stop();
-	ep1.stop();
-	ios.stop();
-
-
 }
 
 void AsyncPsi_SingltonSet_Test_Impl()
@@ -315,14 +296,14 @@ void AsyncPsi_SingltonSet_Test_Impl()
 	//NetworkManager netMgr1("localhost", 1212, 4, false);
 	//auto sendChls = netMgr0.AddChannels(name, setSize);
 	//auto recvChls = netMgr1.AddChannels(name, setSize);
-	BtIOService ios(0);
-	BtEndpoint ep0(ios, "localhost", 1212, true, name);
-	BtEndpoint ep1(ios, "localhost", 1212, false, name);
-	std::vector<Channel*> sendChls(setSize), recvChls(setSize);
+	IOService ios(0);
+	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
+	std::vector<Channel> sendChls(setSize), recvChls(setSize);
 	for (u64 i = 0; i < setSize; ++i)
 	{
-		recvChls[i] = &ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
-		sendChls[i] = &ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
+		recvChls[i] = ep1.addChannel(name + std::to_string(i), name + std::to_string(i));
+		sendChls[i] = ep0.addChannel(name + std::to_string(i), name + std::to_string(i));
 	}
 	Timer tt;
 
@@ -342,8 +323,8 @@ void AsyncPsi_SingltonSet_Test_Impl()
             baseRecvMsg[i] = baseSendMsg[i][baseRecvChoice[i]];
         }
         u64 numOTs = AsyncPsiSender::PsiOTCount(setSize, psiSecParam) * repeatCount + 4;
-        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, *recvChls[0], _1); });
-        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, *sendChls[0], _2);
+        auto thrd = std::thread([&]() {OTRecver.Extend(baseSendMsg, numOTs, prng, recvChls[0], _1); });
+        OTSender.Extend(baseRecvMsg, baseRecvChoice, numOTs, prng, sendChls[0], _2);
         thrd.join();
     }
 	u64 otRecvIdx = 4;
@@ -359,14 +340,14 @@ void AsyncPsi_SingltonSet_Test_Impl()
 		for (u64 j = 0; j < repeatCount; ++j)
 		{
 			u64 otIdx = 4;
-			sendPSIs[j].init(setSize, psiSecParam, *sendChls[0], OTSender, otIdx, prng);
+			sendPSIs[j].init(setSize, psiSecParam, sendChls[0], OTSender, otIdx, prng);
 		}
 	}).join();
 
 	for (u64 j = 0; j < repeatCount; ++j)
 	{
 		u64 otIdx = 4;
-		recvPSIs[j].init(setSize, psiSecParam, *recvChls[0], OTRecver, otIdx);
+		recvPSIs[j].init(setSize, psiSecParam, recvChls[0], OTRecver, otIdx);
 	}
 
 	tt.setTimePoint("initDone");
@@ -383,14 +364,14 @@ void AsyncPsi_SingltonSet_Test_Impl()
 
 
 
-				sender.AsyncCommitSend(sendSet[i], *sendChls[i], i);
+				sender.AsyncCommitSend(sendSet[i], sendChls[i], i);
 
 
-				sender.AsyncCommitRecv(*sendChls[i], i);
+				sender.AsyncCommitRecv(sendChls[i], i);
 
 
 				//	for (u64 i = 0; i < setSize; ++i)
-				sender.open(*sendChls[i], i);
+				sender.open(sendChls[i], i);
 
 			}
 		});
@@ -406,11 +387,11 @@ void AsyncPsi_SingltonSet_Test_Impl()
 				if (!i) tt.setTimePoint("start");
 
 				//for (u64 i = 0; i < setSize; ++i)
-				recv.CommitSend(recvSet[i], *recvChls[i], i);
+				recv.CommitSend(recvSet[i], recvChls[i], i);
 				if (!i) tt.setTimePoint("Commit");
 
 				//for (u64 i = 0; i < setSize; ++i)
-				recv.CommitRecv(*recvChls[i], i);
+				recv.CommitRecv(recvChls[i], i);
 
 				if (!i) tt.setTimePoint("comRecv");
 				//recv.open(recvOutput, recvChl, time);
@@ -420,11 +401,11 @@ void AsyncPsi_SingltonSet_Test_Impl()
 					if (i == 0)
 					{
 
-						if (!recv.open(*recvChls[i], i, Role::First))
+						if (!recv.open(recvChls[i], i, Role::First))
 							throw UnitTestFail();
 					}
 					else
-						if (recv.open(*recvChls[i], i, Role::First))
+						if (recv.open(recvChls[i], i, Role::First))
 							throw UnitTestFail();
 				}
 				if (!i) tt.setTimePoint("open");
@@ -436,14 +417,5 @@ void AsyncPsi_SingltonSet_Test_Impl()
 	{
 		sendThrds[i].join();
 		recvThrds[i].join();
-		sendChls[i]->close();
-		recvChls[i]->close();
 	}
-	//std::cout << tt << std::endl;
-
-	ep0.stop();
-	ep1.stop();
-	ios.stop();
-
-
 }

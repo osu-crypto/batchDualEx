@@ -44,27 +44,10 @@ SET(CMAKE_CXX_FLAGS_DEBUG  "-O0 -g -rdynamic")
 #       Library/includes locations          #
 #############################################
 
-include_directories("${CMAKE_SOURCE_DIR}/libBDX")
-
-include_directories("${CMAKE_SOURCE_DIR}/libBDXTests")
-
 set(libOTe_Dir "${CMAKE_SOURCE_DIR}/../libOTe/")
-include_directories(${libOTe_Dir})
-#link_directories("${libOTe_Dir}/lib/")
-
-
-# default location for miracl
-set(Miracl_Dirs "${libOTe_Dir}/thirdparty/linux/miracl/")
-include_directories("${Miracl_Dirs}") 
-
-# default location for NTL
+set(Miracl_Dirs "${libOTe_Dir}cryptoTools/thirdparty/linux/miracl/")
 set(NTL_Dir "${CMAKE_SOURCE_DIR}/thirdparty/linux/ntl/")
-include_directories("${NTL_Dir}/include")
-
-
-
-# default location for Boost
-set(BOOST_ROOT "${libOTe_Dir}/thirdparty/linux/boost/")
+set(BOOST_ROOT "${libOTe_Dir}cryptoTools/thirdparty/linux/boost/")
 
 
 #############################################
@@ -80,20 +63,5 @@ add_subdirectory(libBDXTests)
 #############################################
 #              Build Frontend               #
 #############################################
-include_directories(${CMAKE_SOURCE_DIR})
-file(GLOB_RECURSE SRC_FRONTEND ${CMAKE_SOURCE_DIR}/FrontEnd/*.cpp)
-add_executable(frontend.exe ${SRC_FRONTEND})
-
-#############################################
-#            Install Frontend               #
-#############################################
-install (TARGETS frontend.exe DESTINATION bin)
-
-#############################################
-#            Link our libraries             #
-#############################################
-
-target_link_libraries(frontend.exe libBDXTests)
-# other libs implicitly linked with libBDXTests
-
+ADD_SUBDIRECTORY(FrontEnd)
 

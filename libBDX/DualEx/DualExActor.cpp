@@ -79,7 +79,7 @@ namespace osuCrypto
     {
 
         PRNG prng(prngSeed);
-        auto& chl = mNetMgr.addChannel("OTRecv", "OTSend");
+        auto chl = mNetMgr.addChannel("OTRecv", "OTSend");
         NaorPinkas baseOTs;// (chl, OTRole::Sender);
 
         std::array<std::array < block, 2>, gOtExtBaseOtCount> baseOTsSender_inputs;
@@ -113,7 +113,7 @@ namespace osuCrypto
 
             thrds[t] = std::thread([&, t, seed]() {
                 PRNG prng2(seed);
-                Channel& chl = mNetMgr.addChannel("OTRecv" + ToString(t), "OTSend" + ToString(t));
+                Channel chl = mNetMgr.addChannel("OTRecv" + ToString(t), "OTSend" + ToString(t));
                 mOTRecv[t].Extend(bases[t], numOTExtPer, prng2, chl, mOTRecvDoneIdx[t]);
                 chl.close();
             });
@@ -134,7 +134,7 @@ namespace osuCrypto
 
     void DualExActor::getSendOTs(block prngSeed, u64 numInit, u64 numOTExtPer)
     {
-        auto& chl = mNetMgr.addChannel("OTSend", "OTRecv");
+        auto chl = mNetMgr.addChannel("OTSend", "OTRecv");
         NaorPinkas baseOTs;// (chl, OTRole::Receiver);
         PRNG prng(prngSeed);
 
@@ -167,7 +167,7 @@ namespace osuCrypto
             }
             thrds[t] = std::thread([&, t, seed]() {
                 PRNG prng2(seed);
-                Channel& chl = mNetMgr.addChannel("OTSend" + ToString(t), "OTRecv" + ToString(t));
+                Channel chl = mNetMgr.addChannel("OTSend" + ToString(t), "OTRecv" + ToString(t));
                 mOTSend[t].Extend(bases[t], baseOTsReceiver_inputs, numOTExtPer, prng2, chl, mOTSendDoneIdx[t]);
                 chl.close();
             });
@@ -187,8 +187,6 @@ namespace osuCrypto
 
     void DualExActor::close()
     {
-        for (auto recvChl : mRecvMainChls)
-            recvChl->close();
         mRecvMainChls.clear();
 
         for (auto& sendThrd : mSendMainThreads)
@@ -199,16 +197,12 @@ namespace osuCrypto
             sendThrd.join();
         mSendSubThreads.clear();
 
-        for (auto sendChl : mSendSubChls)
-            sendChl->close();
         mSendSubChls.clear();
 
         for (auto& thrd : mEvalThreads)
             thrd.join();
         mEvalThreads.clear();
 
-        for (auto& recvSubThrd : mRecvSubChls)
-            recvSubThrd->close();
         mRecvSubChls.clear();
     }
 
@@ -218,7 +212,7 @@ namespace osuCrypto
     /// numThreadsPerEval determines how many threads should be used for each evaluation. Typically bucket size... 
     void DualExActor::init(PRNG& prng, u64 numParallelInit, u64 numParallelEval, u64 numThreadsPerEval, Timer& timer)
     {
-        Channel& chl = mNetMgr.addChannel("init");
+        Channel chl = mNetMgr.addChannel("init");
 
         // send cut n choose commitments 
         block myCnCSeed = prng.get<block>();
@@ -455,7 +449,7 @@ namespace osuCrypto
                     PRNG prng(evalSeed);
 
                     // connect to the other party's send input/PSI thread.
-                    Channel& chl = mNetMgr.addChannel("onlineEval" + ToString(j) + "_" + ToString(i), "onlineSend" + ToString(j) + "_" + ToString(i));
+                    Channel chl = mNetMgr.addChannel("onlineEval" + ToString(j) + "_" + ToString(i), "onlineSend" + ToString(j) + "_" + ToString(i));
 
                     // now start evaluating threads (once the offline is done and inputs are sent).
                     evalThreadLoop(i, numThreadsPerEval, j, numParallelEval, prng, chl);// , mPSIRecvChls[j], mPsiChannelLocks[0][j].get());
@@ -470,7 +464,7 @@ namespace osuCrypto
                     setThreadName("SendSubThread_" + ToString(mRole) + "_" + ToString(j) + "_" + ToString(i));
 
                     // connect to the other party's Eval/PSI thread.
-                    Channel& chl = mNetMgr.addChannel("onlineSend" + ToString(j) + "_" + ToString(i), "onlineEval" + ToString(j) + "_" + ToString(i));
+                    Channel chl = mNetMgr.addChannel("onlineSend" + ToString(j) + "_" + ToString(i), "onlineEval" + ToString(j) + "_" + ToString(i));
 
                     // now wait for inputs and the send the labels and do the PSI.
                     sendCircuitInputLoop(i, numThreadsPerEval, j, numParallelEval, chl);
@@ -493,23 +487,22 @@ namespace osuCrypto
                 auto recvName = "onlineMainRecv_" + std::to_string(j);
                 auto sendName = "onlineMainSend_" + std::to_string(j);
 
-                Channel* sendChlPtr = nullptr;
+                Channel sendChlPtr;
                 if (mRole)
                 {
-                    mRecvMainChls[j] = &mNetMgr.addChannel(recvName, sendName);
-                    sendChlPtr = &mNetMgr.addChannel(sendName, recvName);
+                    mRecvMainChls[j] = mNetMgr.addChannel(recvName, sendName);
+                    sendChlPtr = mNetMgr.addChannel(sendName, recvName);
                 }
                 else
                 {
-                    sendChlPtr = &mNetMgr.addChannel(sendName, recvName);
-                    mRecvMainChls[j] = &mNetMgr.addChannel(recvName, sendName);
+                    sendChlPtr = mNetMgr.addChannel(sendName, recvName);
+                    mRecvMainChls[j] = mNetMgr.addChannel(recvName, sendName);
                 }
 
                 // This function waits for input correction string and then gives it to the sendCircuitInputLoop. 
                 // Also is capable of performing the PSI. But normally its performed in parallel and not by this thread.
-                sendLoop(j, numParallelEval, *sendChlPtr, prng);
+                sendLoop(j, numParallelEval, sendChlPtr, prng);
 
-                sendChlPtr->close();
             });
 
         }
@@ -528,7 +521,7 @@ namespace osuCrypto
         Timer timer;
 
         // connect to the other party's circuit generating thread
-        Channel& chl = mNetMgr.addChannel("initRecv" + ToString(initThrdIdx), "initSend" + ToString(initThrdIdx));
+        Channel chl = mNetMgr.addChannel("initRecv" + ToString(initThrdIdx), "initSend" + ToString(initThrdIdx));
 
         // get their circuits, my K-prone input wire label commitments and output label commitments.
         for (u64 i = startIdx; i < endIdx; i++)
@@ -694,7 +687,7 @@ namespace osuCrypto
         std::shared_future<std::array<std::vector<u64>, 2>*>& cutnChooseSets)
     {
         PRNG prng(prngSeed);
-        Channel& chl = mNetMgr.addChannel("initSend" + ToString(initThrdIdx), "initRecv" + ToString(initThrdIdx));
+        Channel chl = mNetMgr.addChannel("initSend" + ToString(initThrdIdx), "initRecv" + ToString(initThrdIdx));
 
         u64 startIdx = initThrdIdx* mNumCircuits / mNumInitThreads;
         u64 endIdx = (initThrdIdx + 1) * mNumCircuits / mNumInitThreads;
@@ -819,7 +812,7 @@ namespace osuCrypto
         bucket.mInputPromise.set_value(&input);
 
 
-        auto& chl = *mRecvMainChls[bufferOffset];
+        auto& chl = mRecvMainChls[bufferOffset];
         //chl.asyncSend(&evalIdx, sizeof(evalIdx));
 
         // evaluate the circuits that we have received

@@ -47,7 +47,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../libOTe/thirdparty\win;$(SolutionDir)/../libOTe;C:\libs;C:\libs\boost;$(SolutionDir)thirdparty\win\boost;$(SolutionDir)libBDX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../libOTe/thirdparty\win;$(SolutionDir)/../libOTe;$(SolutionDir)/../libOTe/cryptoTools;$(SolutionDir)/../libOTe/cryptoTools;C:\libs;C:\libs\boost;$(SolutionDir)thirdparty\win\boost;$(SolutionDir)libBDX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PreprocessorDefinitions>SOLUTION_DIR=R"**($(SolutionDir))**";_MBCS;%(PreprocessorDefinitions);_WIN32_WINNT=0x0501</PreprocessorDefinitions>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -63,7 +63,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../libOTe/thirdparty\win;$(SolutionDir)/../libOTe;C:\libs;C:\libs\boost;$(SolutionDir)thirdparty\win\boost;$(SolutionDir)libBDX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../libOTe/thirdparty\win;$(SolutionDir)/../libOTe;$(SolutionDir)/../libOTe/cryptoTools;$(SolutionDir)/../libOTe/cryptoTools;C:\libs;C:\libs\boost;$(SolutionDir)thirdparty\win\boost;$(SolutionDir)libBDX;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PreprocessorDefinitions>SOLUTION_DIR=R"**($(SolutionDir))**";_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
@@ -75,7 +75,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AsyncPSI_Tests.cpp" />
-    <ClCompile Include="BtChannel_Tests.cpp" />
     <ClCompile Include="CircuitPackage_Tests.cpp" />
     <ClCompile Include="Circuit_Tests.cpp" />
     <ClCompile Include="Common.cpp" />
@@ -88,7 +87,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncPSI_Tests.h" />
-    <ClInclude Include="BtChannel_Tests.h" />
     <ClInclude Include="CircuitPackage_Tests.h" />
     <ClInclude Include="Circuit_Tests.h" />
     <ClInclude Include="Common.h" />

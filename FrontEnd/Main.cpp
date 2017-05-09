@@ -1,7 +1,7 @@
 #include "cryptoTools/Common/Defines.h"
 #include "cryptoTools/Network/Channel.h"
 #include "cryptoTools/Common/Timer.h"
-#include "cryptoTools/Network/BtEndpoint.h"
+#include "cryptoTools/Network/Endpoint.h"
 #include "signalHandle.h"
 
 #include <vector>
@@ -46,7 +46,7 @@ void pingTest(Endpoint& netMgr, Role role)
     std::array<u8, 131072> oneMB;
 
     Timer timer;
-    auto& chl = netMgr.addChannel("ntSend");
+    auto chl = netMgr.addChannel("ntSend");
     ByteStream buff;
     if (role)
     {
@@ -379,14 +379,14 @@ void commandLineMain(int argc, const char** argv)
     }
 
 
-    BtIOService ios(0);
-    BtEndpoint netMgr(ios, hostname, portnum, role, "ss");
+    IOService ios(0);
+    Endpoint netMgr(ios, hostname, portnum, role ? EpMode::Server : EpMode::Client, "ss");
 
 
     if (verbose)
     {
         std::cout << "Connecting..." ;
-        auto fu = std::async([&]() {netMgr.addChannel("___testchannel____").close(); });
+        auto fu = std::async([&]() {netMgr.addChannel("___testchannel____").waitForConnection(); });
         while (fu.wait_for(std::chrono::seconds(1)) == std::future_status::timeout) std::cout << ".";
         std::cout << std::endl;
     }
@@ -547,8 +547,8 @@ void Eval(
 
 
 
-    BtIOService ios(0);
-    BtEndpoint netMgr0(ios, "127.0.0.1", 1212, true, "ss");
+    IOService ios(0);
+    Endpoint netMgr0(ios, "127.0.0.1", 1212, EpMode::Server, "ss");
     //NetworkManager netMgr0("127.0.0.1", 1212, 4, true);
 
     PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
@@ -591,8 +591,7 @@ void Eval(
     });
 
 
-    //BtIOService ios(0);
-    BtEndpoint netMgr1(ios, "127.0.0.1", 1212, false, "ss");
+    Endpoint netMgr1(ios, "127.0.0.1", 1212, EpMode::Client, "ss");
 
     DualExActor actor1(cir, Role::Second, numExe, bucketSize, numOpened, psiSecParam, netMgr1);
     actor1.PRINT_EVAL_TIMES = actor1.PRINT_SETUP_TIMES = timefiles;

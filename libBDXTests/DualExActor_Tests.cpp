@@ -1,5 +1,5 @@
 #include "DualExActor_Tests.h"
-#include "cryptoTools/Network/BtEndpoint.h"
+#include "cryptoTools/Network/Endpoint.h"
 
 #include "Common.h"
 #include "cryptoTools/Common/Defines.h"
@@ -27,9 +27,9 @@ void DualExActor_BitAdder_Complete_Test_Impl()
 	//NetworkManager netMgr1("127.0.0.1", 1212, 4, false);
 
 	std::string name("ss");
-	BtIOService ios(0);
-	BtEndpoint ep0(ios, "localhost", 1212, true, name);
-	BtEndpoint ep1(ios, "localhost", 1212, false, name);
+	IOService ios(0);
+	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Server, name);
 	//Channel& recvChannel = ep1.addChannel(name, name);
 	//Channel& senderChannel = ep0.addChannel(name, name);
 	{
@@ -100,9 +100,9 @@ void DualExActor_BitAdder_Concurrent_Test_Impl()
 
 	Circuit c = AdderCircuit(4);
 	std::string name("ss");
-	BtIOService ios(0);
-	BtEndpoint ep0(ios, "localhost", 1212, true, name);
-	BtEndpoint ep1(ios, "localhost", 1212, false, name);
+	IOService ios(0);
+	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Server, name);
 	//Channel& recvChannel = ep1.addChannel(name, name);
 	//Channel& senderChannel = ep0.addChannel(name, name);
 	{

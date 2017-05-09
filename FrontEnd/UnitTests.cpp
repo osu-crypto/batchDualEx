@@ -8,7 +8,6 @@
 #include "HalfGtGarbledCircuit_Tests.h"
 #include "Circuit/KProbeResistant.h"
 #include "KProbe_Tests.h"
-#include "BtChannel_Tests.h"
 #include "OT_Tests.h"
 #include "PSI_Tests.h"
 #include "AsyncPSI_Tests.h"
@@ -97,33 +96,11 @@ void KProbe_all()
 	run("KProbe_XORTransitive          ", KProbe_XORTransitive_Test_Impl);
 }
 
-
-//void NetWork_all()
-//{
-//	std::cout << std::endl;
-//	run("Network_Connect1              ", Network_Connect1_Local_Test_Impl);
-//	run("Network_ConnectMany           ", Network_ConnectMany_Local_Test_Impl);
-//	run("Network_CrossConnect          ", Network_CrossConnect_Test_Impl);
-//}
-
 void OT_all()
 {
 	std::cout << std::endl;
 	run("OTExt_100Receive              ", OTExt_100Receive_Test_Impl);
 }
-
-
-void NetWork_all()
-{
-	std::cout << std::endl;
-	run("BtNetwork_Connect1_Boost_Test        ", BtNetwork_Connect1_Boost_Test);
-	run("BtNetwork_OneMegabyteSend_Boost_Test ", BtNetwork_OneMegabyteSend_Boost_Test);
-	run("BtNetwork_ConnectMany_Boost_Test     ", BtNetwork_ConnectMany_Boost_Test);
-	run("BtNetwork_CrossConnect_Test          ", BtNetwork_CrossConnect_Test);
-	run("BtNetwork_ManyEndpoints_Test         ", BtNetwork_ManyEndpoints_Test);
-
-}
-
 
 
 
@@ -136,6 +113,5 @@ void runAll()
 	HalfGtGarbledCircuit_all();
 	KProbe_all();
 	PSI_all();
-	NetWork_all();
 	OT_all();
 }

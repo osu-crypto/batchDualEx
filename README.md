@@ -26,7 +26,10 @@ Building on linux consists of aquiring the dependencies and calling `cmake -G "U
 
 ```
 git clone  --recursive https://github.com/osu-crypto/libOTe.git
-cd libOTe/thirdparty/linux
+cd libOTe
+git reset --hard  e0727fe6dcfdd4
+git submodule update --recursive
+cd thirdparty/linux
 bash all.get
 cd ../..
 cmake  -G "Unix Makefiles"

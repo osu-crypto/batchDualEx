@@ -39,9 +39,6 @@
     <ClCompile Include="DebugCircuits.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="BtChannel_Tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AsyncPSI_Tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -75,9 +72,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DebugCircuits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BtChannel_Tests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AsyncPSI_Tests.h">

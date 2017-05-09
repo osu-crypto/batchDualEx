@@ -3,8 +3,8 @@
 
 #include "OT/OTExtReceiver.h"
 #include "OT/OTExtSender.h"
-#include "cryptoTools/Network/BtChannel.h"
-#include "cryptoTools/Network/BtEndpoint.h"
+#include "cryptoTools/Network/Channel.h"
+#include "cryptoTools/Network/Endpoint.h"
 
 #include "cryptoTools/Common/Log.h"
 #include "Common.h"
@@ -165,17 +165,11 @@ void OTExt_100Receive_Test_Impl()
 		setThreadName("Sender");
 
 		std::string name("ss");
-		BtIOService ios(0);
-		BtEndpoint ep0(ios, "localhost", 1212, true, name);
-		BtEndpoint ep1(ios, "localhost", 1212, false, name);
-		Channel& recvChannel = ep1.addChannel(name, name);
-		Channel& senderChannel = ep0.addChannel(name, name);
-
-		//NetworkManager senderNetMgr("localhost", 1212, 1, true);
-		//NetworkManager recvNetMgr("localhost", 1212, 1, false);
-
-		//auto& senderChannel = senderNetMgr.addChannel("OTExt");
-		//auto& recvChannel = recvNetMgr.addChannel("OTExt");
+		IOService ios(0);
+		Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+		Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
+		Channel recvChannel = ep1.addChannel(name, name);
+		Channel senderChannel = ep0.addChannel(name, name);
 
 		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
 		PRNG prng1(_mm_set_epi32(4253233465, 334565, 0, 235));

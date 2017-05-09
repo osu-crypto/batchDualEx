@@ -1,5 +1,5 @@
 #include "CircuitPackage_Tests.h"
-#include "cryptoTools/Network/BtEndpoint.h"
+#include "cryptoTools/Network/Endpoint.h"
 
 #include "Common.h"
 #include "cryptoTools/Common/Defines.h"
@@ -21,11 +21,11 @@ void CircuitPackage_BitAdder_Test_Impl()
 
 	std::string name("psi");
 
-	BtIOService ios(0);
-	BtEndpoint ep0(ios, "localhost", 1212, true, name);
-	BtEndpoint ep1(ios, "localhost", 1212, false, name);
-	Channel& recvChl = ep1.addChannel(name, name);
-	Channel& sendChl = ep0.addChannel(name, name);
+	IOService ios(0);
+	Endpoint ep0(ios, "localhost", 1212, EpMode::Server, name);
+	Endpoint ep1(ios, "localhost", 1212, EpMode::Client, name);
+	Channel recvChl = ep1.addChannel(name, name);
+	Channel sendChl = ep0.addChannel(name, name);
 
 	PRNG prng(_mm_set_epi32(4253465, 3434565, 87654, 23987045));
 

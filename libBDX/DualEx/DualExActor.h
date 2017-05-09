@@ -33,7 +33,7 @@ namespace osuCrypto
         
 		std::vector<BDX_OTExtReceiver> mOTRecv;
 		std::vector<BDX_OTExtSender> mOTSend;
-		std::vector<Channel*> mRecvMainChls,mRecvSubChls, mSendSubChls;// , &mPsiChl;
+		std::vector<Channel> mRecvMainChls,mRecvSubChls, mSendSubChls;// , &mPsiChl;
 		//std::vector<std::vector<Channel*>> mPSISendChls, mPSIRecvChls;
 		//std::unique_ptr<std::mutex[]> mMtxs;
 	public:

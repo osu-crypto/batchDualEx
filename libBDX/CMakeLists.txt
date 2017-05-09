@@ -7,6 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 add_library(libBDX STATIC ${SRCS})
 
+target_include_directories(libBDX PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 #############################################
 #            Install                        #
@@ -44,6 +45,10 @@ if(NOT LIBOTE_LIB)
   message(FATAL_ERROR "Failed to find libOTe at ${libOTe_Dir}/lib/")
 endif()
 
+target_include_directories(libBDX PUBLIC "${libOTe_Dir}") 
+
+
+
 find_library(
   CRYPTOTOOLS_LIB
   NAMES cryptoTools
@@ -54,6 +59,9 @@ if(NOT LIBOTE_LIB)
   Message(${LIBOTE_LIB})
   message(FATAL_ERROR "Failed to find libOTe at ${libOTe_Dir}/lib/")
 endif()
+
+target_include_directories(libBDX PUBLIC "${libOTe_Dir}/cryptoTools") 
+
 
 find_library(
   MIRACL_LIB
@@ -66,6 +74,7 @@ if(NOT MIRACL_LIB)
   message(FATAL_ERROR "Failed to find miracl at " ${Miracl_Lib_Dirs})
 endif()
 
+target_include_directories(libBDX PUBLIC "${Miracl_Dirs}") 
 
 
 
@@ -81,6 +90,8 @@ if(NOT NTL_LIB)
   message(FATAL_ERROR "Failed to find NTL at " ${NTL_Dir})
 endif()
 
+target_include_directories(libBDX PUBLIC "${NTL_Dir}/include/") 
+
 
 set(Boost_USE_STATIC_LIBS        ON) # only find static libs
 set(Boost_USE_MULTITHREADED      ON)
@@ -89,7 +100,7 @@ set(Boost_USE_STATIC_RUNTIME     ON)
 find_package(Boost  COMPONENTS system thread)
 
 if(Boost_FOUND)
-  include_directories(${Boost_INCLUDE_DIR})
+  target_include_directories(libBDX PUBLIC ${Boost_INCLUDE_DIR})
   #message( "Found Boost at ${Boost_LIBRARIES}")
 else()
    message(FATAL_ERROR "Failed to find boost at " ${Boost_Lib_Dirs} " Need system thread")
