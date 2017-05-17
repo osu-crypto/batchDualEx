@@ -166,16 +166,15 @@ void HalfGtGC_AES_Test_Impl()
 
 	HalfGtGarbledCircuit gc;
 
-	Circuit cd;
 	std::fstream in;
-	in.open(testData + "/circuits/AES-non-expanded.txt");
+	std::string file = testData == "" ? "./circuits/AES-non-expanded.txt" : testData + "/circuits/AES-non-expanded.txt";
+
+	in.open(file);
 
 	if (in.is_open() == false)
-		throw UnitTestFail("failed to open file: " + testData + "/circuits/AES-non-expanded.txt");
+		throw UnitTestFail("failed to open file: " + file);
 
-	if (in.is_open() == false)
-		throw UnitTestFail();
-
+	Circuit cd;
 	cd.readBris(in, true);
 
 	std::vector<block>indexArray(cd.WireCount());

@@ -68,10 +68,12 @@ void Circuit_BrisRead_SHA_Test_Impl()
     Circuit cir;
     std::fstream in;
 
-    in.open(testData + "/circuits/sha-256.txt");
+	std::string file = testData == "" ? "./circuits/sha-256.txt" : testData + "/circuits/sha-256.txt";
+
+    in.open(file);
 
     if (in.is_open() == false)
-        throw UnitTestFail("failed to open file: " + testData + "/circuits/sha-256.txt");
+        throw UnitTestFail("failed to open file: " + file);
 
     cir.readBris(in, false);
 
@@ -158,10 +160,13 @@ void Circuit_BrisRead_AES_Test_Impl()
 {
     Circuit cir;
     std::fstream in; 
-    in.open(testData + "/circuits/AES-non-expanded.txt");
+
+	std::string file = testData == "" ? "./circuits/AES-non-expanded.txt" : testData + "/circuits/AES-non-expanded.txt";
+
+    in.open(file);
 
     if (in.is_open() == false)
-        throw UnitTestFail("failed to open file: " + testData + "/circuits/AES-non-expanded.txt");
+        throw UnitTestFail("failed to open file: " + file);
 
     if (in.is_open() == false)
         throw UnitTestFail();
@@ -253,12 +258,13 @@ void Circuit_BrisRead_Adder32_Test_Impl()
 {
     setThreadName("CP_Test_Thread");
 
-    Circuit cir;
+	std::string file = testData == "" ? "./circuits/adder_32bit.txt" : testData + "/circuits/adder_32bit.txt";
+	Circuit cir;
     std::fstream in;
-    in.open(testData + "/circuits/adder_32bit.txt");
+    in.open(file);
 
     if (in.is_open() == false)
-        throw UnitTestFail("failed to open file: " + testData + "/circuits/adder_32bit.txt");
+        throw UnitTestFail("failed to open file: " + file);
 
     cir.readBris(in);
 
