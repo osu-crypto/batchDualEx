@@ -89,6 +89,8 @@ void ToBitVector(std::vector<bool>& vec, u64 input, u64 bits)
 	}
 }
 
+
+
 void HalfGtGC_BitAdder_Test_Impl()
 {
 	u32 bits{ 4 };
@@ -154,6 +156,136 @@ void HalfGtGC_BitAdder_Test_Impl()
 		}
 	}
 }
+
+
+
+extern void swapEndian(BitVector& bv, u64 byteIdx);
+
+void HalfGtGC_AES_Test_Impl()
+{
+
+	HalfGtGarbledCircuit gc;
+
+	Circuit cd;
+	std::fstream in;
+	in.open(testData + "/circuits/AES-non-expanded.txt");
+
+	if (in.is_open() == false)
+		throw UnitTestFail("failed to open file: " + testData + "/circuits/AES-non-expanded.txt");
+
+	if (in.is_open() == false)
+		throw UnitTestFail();
+
+	cd.readBris(in, true);
+
+	std::vector<block>indexArray(cd.WireCount());
+	for (u64 i = 0; i < indexArray.size(); ++i)
+		indexArray[i] = toBlock(i);
+	block seed = toBlock(234234);
+
+#ifdef ADAPTIVE_SECURE
+	std::vector<block> masks(cd.NonXorGateCount() * 2);
+	PRNG prng(seed);
+	prng.get((u8*)masks.data(), masks.size() * sizeof(block));
+
+	std::vector<block> maskCopy = masks;
+	gc.Garble(cd, seed, indexArray, maskCopy);
+#else 
+	gc.Garble(cd, seed);
+#endif
+
+
+
+	BitVector inputVec(256);
+
+
+
+	std::vector<block>labels(cd.WireCount());
+	for (u64 i = 0; i < inputVec.size(); ++i)
+	{
+		if (inputVec[i])
+			labels[i] = (gc.mInputWires[i] ^ (gc.mGlobalOffset));
+		else
+			labels[i] = (gc.mInputWires[i]);
+	}
+	gc.evaluate(cd, labels
+#ifdef ADAPTIVE_SECURE
+		, masks
+#endif
+	);
+	BitVector output;
+	gc.translate(cd, labels, output);
+
+
+	block key = ZeroBlock;
+	block data = ZeroBlock;
+	block enc;
+
+	AES keyShed(key);
+	keyShed.ecbEncBlock(data, enc);
+
+	BitVector expected;
+	expected.assign(enc);
+
+	for (int i = 0; i < 16; ++i)
+	{
+		swapEndian(output, i);
+	}
+
+
+	if (expected != output)
+	{
+
+		std::cout << "out  " << (output) << "  " << output.hammingWeight() << std::endl;
+		std::cout << "outx " << (expected) << "  " << expected.hammingWeight() << std::endl;
+		throw UnitTestFail();
+	}
+//	for (u64 input0 = 0; input0 < (u64(1) << bits); ++input0)
+//	{
+//		for (u64 input1 = 0; input1 < (u64(1) << bits); ++input1)
+//		{
+//			std::vector<bool>inputVec;
+//			ToBitVector(inputVec, input0, bits);
+//			ToBitVector(inputVec, input1, bits);
+//
+//			std::vector<block>labels(cd.WireCount());
+//			for (u64 i = 0; i < inputVec.size(); ++i)
+//			{
+//				if (inputVec[i])
+//					labels[i] = (gc.mInputWires[i] ^ (gc.mGlobalOffset));
+//				else
+//					labels[i] = (gc.mInputWires[i]);
+//			}
+//
+//			gc.evaluate(cd, labels
+//#ifdef ADAPTIVE_SECURE
+//				, masks
+//#endif
+//			);
+//			BitVector outputVec;
+//			gc.translate(cd, labels, outputVec);
+//
+//			std::vector<bool> expectedOut;
+//			ToBitVector(expectedOut, input0 + input1, bits + 1);
+//
+//			//cd.Evaluate(inputVec);
+//			//std::vector<bool> outputVec2;
+//			//cd.Translate(inputVec, outputVec2);
+//
+//			if (outputVec.size() != expectedOut.size())
+//				throw UnitTestFail();
+//
+//			for (u64 i = 0; i < outputVec.size(); ++i)
+//			{
+//				if ((bool)outputVec[i] != (bool)expectedOut[i])
+//					throw UnitTestFail();
+//
+//				//Assert::AreEqual(true, true, L"Output bits dont match");
+//			}
+//		}
+//	}
+}
+
 
 void HalfGtGC_BitAdder_Validate_Test_Impl()
 {

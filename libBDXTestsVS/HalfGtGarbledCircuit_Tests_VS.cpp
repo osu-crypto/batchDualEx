@@ -14,18 +14,26 @@ namespace osuCryptoTests
 
 	   TEST_METHOD(HalfGtGC_BasicGates_Test)
       {
-		  InitDebugPrinting("../test.out");
+		  InitDebugPrinting();
 		  HalfGtGC_BasicGates_Test_Impl();
       }
 
       TEST_METHOD(HalfGtGC_BitAdder_Test)
       {
+		  InitDebugPrinting();
 		  HalfGtGC_BitAdder_Test_Impl();
       }
 
 	  TEST_METHOD(HalfGtGC_BitAdder_Validate_Test)
 	  {
+		  InitDebugPrinting();
 		  HalfGtGC_BitAdder_Validate_Test_Impl();
+	  }
+
+	  TEST_METHOD(HalfGtGC_AES_Test)
+	  {
+		  InitDebugPrinting();
+		  HalfGtGC_AES_Test_Impl();
 	  }
    };
 }

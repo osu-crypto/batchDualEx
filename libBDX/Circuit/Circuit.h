@@ -14,6 +14,24 @@ namespace osuCrypto {
 
 	class DagCircuit;
 
+	struct WireNode
+	{
+		GateType mType;
+		u64 inputs[2];
+		u64 outWireId;
+
+		u64 newOutIdx;
+
+		WireNode()
+		{
+			mType = GateType::Zero;
+			inputs[0] = -1;
+			inputs[1] = -1;
+			outWireId = -1;
+			newOutIdx = -1;
+		}
+	};
+
 	class Circuit
 	{
 	public:
@@ -27,13 +45,13 @@ namespace osuCrypto {
 		void readBris(std::istream& in, bool reduce = true);
 		//void writeBris(std::ostream& out);
 
-		void evaluate(BitVector& input);
-		void translate(BitVector& labels, BitVector& output);
+		void evaluate(BitVector& input/*, bool old = true*/);
+		void translate(BitVector& labels, BitVector& output/*, bool old = true*/);
 
 		void evaluate(std::vector<bool>& input);
 		void translate(std::vector<bool>& labels, std::vector<bool>& output);
 
-		void init();
+		//void init();
 
 		u64 AddGate(u64 input0, u64 input1, GateType gt);
 
@@ -95,6 +113,11 @@ namespace osuCrypto {
 
         std::vector<u8> mOutputInverts;
 
+		//void readBris2(std::istream & in, bool reduce = true);
+
+		std::vector<WireNode> mNodes;// (numWires);
+		std::vector<u64> mNewToOldWireMap;
+		//std::vector<u64> mOutNodes;
 		//std::vector<block> mIndexArray;
 	private:
 

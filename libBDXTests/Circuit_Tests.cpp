@@ -21,6 +21,31 @@ using namespace osuCrypto;
 #ifdef min
 #undef min
 #endif
+void swapEndian(BitVector& bv, u64 byteIdx)
+{
+	BitVector bb;
+
+	bb.copy(bv, byteIdx * 8, 8);
+
+	for (u64 i = 0; i < 8; ++i)
+	{
+		bv[byteIdx * 8 + i] = bb[7 - i];
+	}
+}
+
+std::string byteSpaced(BitVector& bv)
+{
+	BitVector bb;
+	std::stringstream ss;
+	for (u64 i = 0; i < (bv.size() + 7) / 8; ++i)
+	{
+		bb.resize(0);
+		bb.copy(bv, i * 8, std::min<u64>(8, bv.size() - (i + 1) * 8));
+		ss << bb << " ";
+	}
+
+	return ss.str();
+}
 
 
 void Circuit_BrisRead_SHA_Test_Impl()
@@ -58,23 +83,76 @@ void Circuit_BrisRead_SHA_Test_Impl()
     cir.translate(input, output);
 
 
-    u8 data[4 * 8]{
+    u8 SHA1_zero_data[4 * 8]{
         0xda, 0x56, 0x98 , 0xbe, 0x17, 0xb9, 0xb4, 0x69,
         0x62, 0x33, 0x57 , 0x99, 0x77, 0x9f, 0xbe, 0xca,
         0x8c, 0xe5, 0xd4 , 0x91, 0xc0, 0xd2, 0x62, 0x43,
         0xba, 0xfe, 0xf9 , 0xea, 0x18, 0x37, 0xa9, 0xd8
     };
 
-    BitVector expectedOut((u8*)data, 256);
 
-    //if (expectedOut != output)
-    //{
-    //    //std::cout << "in   " << input.hex() << std::endl;
-    //    //std::cout << "out  " << output.hex() << std::endl;
-    //    //std::cout << "outx " << expectedOut.hex() << std::endl;
-    //    throw UnitTestFail();
-    //}
+
+
+    BitVector expectedOut((u8*)SHA1_zero_data, 256);
+
+	for (u64 i = 0; i < output.size() / 8; ++i)
+	{
+		swapEndian(expectedOut, i);
+	}
+
+    if (expectedOut != output)
+    {
+        std::cout << "out  " << output << std::endl;
+        std::cout << "outx " << expectedOut << std::endl;
+
+
+		//for (u64 i = 0; i < output.size(); ++i)
+		//{
+		//	if (output[i] != expectedOut[i])
+		//		std::cout << " d "<< i <<" act " << output[i]  << " vs " << expectedOut[i] << std::endl;
+
+		//	if(cir.mOutputInverts[i] )
+		//		std::cout << " o " << i << std::endl;
+
+		//}
+        throw UnitTestFail();
+    }
+
+	// doesnt work, not sure why
+	//u8 SHA1_allOnes_data[4 * 8]{
+	//	0xef, 0x0c, 0x74, 0x8d, 0xf4, 0xda, 0x50, 0xa8,
+	//	0xd6, 0xc4, 0x3c, 0x01, 0x3e, 0xdc, 0x3c, 0xe7,
+	//	0x6c, 0x9d, 0x9f, 0xa9, 0xa1, 0x45, 0x8a, 0xde,
+	//	0x56, 0xeb, 0x86, 0xc0, 0xa6, 0x44, 0x92, 0xd2
+	//};
+
+	//BitVector expectedOut2((u8*)SHA1_allOnes_data, 256);
+
+	//input.resize(256);
+	//memset(input.data(), -1, 32);
+
+	//std::cout << input << std::endl;
+
+	//cir.evaluate(input);
+	//cir.translate(input, output);
+
+
+
+	//for (u64 i = 0; i < output.size() / 8; ++i)
+	//{
+	//	swapEndian(expectedOut2, i);
+	//}
+
+	//if (expectedOut2 != output)
+	//{
+	//	std::cout << "2 out  " << output << std::endl;
+	//	std::cout << "2 outx " << expectedOut2 << std::endl;
+
+	//	throw UnitTestFail();
+	//}
+
 }
+
 
 void Circuit_BrisRead_AES_Test_Impl()
 {
@@ -90,31 +168,49 @@ void Circuit_BrisRead_AES_Test_Impl()
 
     cir.readBris(in, true);
 
-    block key = ZeroBlock;
-    block data = ZeroBlock;
+	block key = toBlock(3546, 876556456); 
+    block data = toBlock(456234532, 324523423);
     block enc;
+	memset(&data, 0, 8);
 
     AES keyShed(key);
     keyShed.ecbEncBlock(data, enc);
 
     BitVector labels, output;
     labels.reserve(cir.WireCount());
-    labels.resize(256);
 
-    cir.evaluate(labels);
-    cir.translate(labels, output);
+    labels.resize(256);
+	//memset(labels.data(), 0xff, 16);
+
+	memcpy(labels.data(), &data, 16);
+	memcpy(labels.data() + 16, &key, 16);
+
+
+	for (int i = 0; i < 32; ++i)
+	{
+		swapEndian(labels, i);
+	}
+
+
+	cir.evaluate(labels);
+	cir.translate(labels, output);
 
     BitVector expected;
     expected.assign(enc);
 
+	for (int i = 0; i < 16; ++i)
+	{
+		swapEndian(output, i);
+	}
 
-    //if (expected != output)
-    //{
 
-    //    //std::cout << "out  " << output.hex() << std::endl;
-    //    //std::cout << "outx " << expected.hex() << std::endl;		
-    //    throw UnitTestFail();
-    //}
+    if (expected != output )
+    {
+
+		std::cout << "out  " << byteSpaced(output) << "  " << output.hammingWeight() << std::endl;
+        std::cout << "outx " << byteSpaced(expected) << "  " << expected.hammingWeight()<< std::endl;
+        throw UnitTestFail();
+    }
 }
 
 

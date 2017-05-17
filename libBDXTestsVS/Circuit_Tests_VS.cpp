@@ -2,6 +2,7 @@
 #include "CppUnitTest.h"
 
 #include "Circuit_Tests.h"
+#include "Common.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -14,11 +15,13 @@ namespace osuCryptoTests
 
 		TEST_METHOD(Circuit_BrisRead_SHA_Test)
 		{
+			InitDebugPrinting();
 			Circuit_BrisRead_SHA_Test_Impl();
 		}
 
 		TEST_METHOD(Circuit_BrisRead_AES_Test)
 		{
+			InitDebugPrinting();
 			Circuit_BrisRead_AES_Test_Impl();
 		}
 

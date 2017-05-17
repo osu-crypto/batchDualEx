@@ -35,6 +35,6 @@ Circuit AdderCircuit(u64 bits)
 		carrys.push_back(cd.AddGate(carry0, carry1, GateType::Or));
 	}
 	cd.AddOutputWire(carrys.back(), false);
-	cd.init();
+	//cd.init();
 	return cd;
 }
