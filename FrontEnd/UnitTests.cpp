@@ -77,6 +77,7 @@ void HalfGtGarbledCircuit_all()
 {
 	std::cout << std::endl;
 	run("HalfGtGC_BasicGates           ", HalfGtGC_BasicGates_Test_Impl);
+	run("HalfGtGC_AES                  ", HalfGtGC_AES_Test_Impl);
 	run("HalfGtGC_BitAdder             ", HalfGtGC_BitAdder_Test_Impl);
 	run("HalfGtGC_BitAdder_Validate    ", HalfGtGC_BitAdder_Validate_Test_Impl);
 }
