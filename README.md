@@ -29,9 +29,9 @@ git clone  --recursive https://github.com/osu-crypto/libOTe.git
 cd libOTe
 git reset --hard  e0727fe6dcfdd4
 git submodule update --recursive
-cd thirdparty/linux
+cd cryptoTools/thirdparty/linux
 bash all.get
-cd ../..
+cd ../../..
 cmake  -G "Unix Makefiles"
 make
 cd ..
